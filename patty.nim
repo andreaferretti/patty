@@ -41,7 +41,7 @@ proc makeBranch(n: NimNode): NimNode {. compileTime .} =
   else:
       error("Invalid ADT case: " & $(toStrLit(n)))
 
-macro adt*(e: expr, body: stmt): stmt {. immediate .} =
+proc defineTypes(e, body: NimNode): NimNode {. compileTime .} =
   e.expectKind(nnkIdent)
   body.expectKind(nnkStmtList)
   # The children of the body should look like object constructors
@@ -72,6 +72,9 @@ macro adt*(e: expr, body: stmt): stmt {. immediate .} =
   result = newNimNode(nnkTypeSection)
   result.add(enumType)
   result.add(definedType)
+
+macro adt*(e: expr, body: stmt): stmt {. immediate .} =
+  result = defineTypes(e, body)
   when defined(pattydebug):
     echo toStrLit(result)
 
