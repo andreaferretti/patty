@@ -6,6 +6,75 @@ iterator tail(a: NimNode): NimNode =
     if not first: yield x
     first = false
 
+proc enumsIn(n: NimNode): seq[NimNode] {. compileTime .} =
+  result = @[]
+  for c in children(n):
+    if c.kind == nnkObjConstr:
+    # c.expectKind(nnkObjConstr)
+      let id = c[0]
+      id.expectKind(nnkIdent)
+      result.add(id)
+    elif c.kind == nnkIdent:
+      result.add(c)
+    else:
+      error("Invalid ADT case: " & $(toStrLit(c)))
+
+proc newEnum(name: NimNode, idents: seq[NimNode]): NimNode {. compileTime .} =
+  result = newNimNode(nnkTypeDef).add(name, newEmptyNode())
+  var choices = newNimNode(nnkEnumTy).add(newEmptyNode())
+  for ident in idents:
+    choices.add(ident)
+  result.add(choices)
+
+proc makeBranch(n: NimNode): NimNode {. compileTime .} =
+  result = newNimNode(nnkOfBranch)
+  if n.kind == nnkObjConstr:
+    let id = n[0]
+    var list = newNimNode(nnkRecList)
+    for e in tail(n):
+      e.expectKind(nnkExprColonExpr)
+      e.expectMinLen(2)
+      list.add(newIdentDefs(e[0], e[1]))
+    result.add(id, list)
+  elif n.kind == nnkIdent:
+    result.add(n, newNimNode(nnkRecList).add(newNilLit()))
+  else:
+      error("Invalid ADT case: " & $(toStrLit(n)))
+
+macro adt*(e: expr, body: stmt): stmt {. immediate .} =
+  e.expectKind(nnkIdent)
+  body.expectKind(nnkStmtList)
+  # The children of the body should look like object constructors
+  #
+  #   Circle(r: float)
+  #   Rectangle(w: float, h: float)
+  #
+  # Here we first extract the external identifiers (Circle, Rectangle)
+  # that will be the possible values of the kind enum.
+  let enumName = ident($(e) & "Enum")
+  let enumType = newEnum(enumName, enumsIn(body))
+
+  # Then we put the actual type we are defining
+  var cases = newNimNode(nnkRecCase).add(newIdentDefs(ident("kind"), enumName))
+  for child in children(body):
+    cases.add(makeBranch(child))
+
+  let definedType = newNimNode(nnkTypeDef).add(
+    e,
+    newEmptyNode(),
+    newNimNode(nnkObjectTy).add(
+      newEmptyNode(),
+      newEmptyNode(),
+      newNimNode(nnkRecList).add(cases)
+    )
+  )
+
+  result = newNimNode(nnkTypeSection)
+  result.add(enumType)
+  result.add(definedType)
+  when defined(pattydebug):
+    echo toStrLit(result)
+
 macro match*(e: expr, body: stmt): stmt {. immediate .} =
   # A fresh symbol used to hold the evaluation of e
   let sym = genSym()
@@ -34,8 +103,13 @@ macro match*(e: expr, body: stmt): stmt {. immediate .} =
       obj = child[0]
       statements = child[1]
 
-    obj.expectKind(nnkObjConstr)
     statements.expectKind(nnkStmtList)
+
+    # We have a few cases for obj (the matchin part)
+    # It could be
+    # - a matching clause like Circle(r: r)
+    # - a literal
+    obj.expectKind(nnkObjConstr)
 
     # This is the thing we dispatch on
     let kindId = obj[0]
@@ -46,7 +120,9 @@ macro match*(e: expr, body: stmt): stmt {. immediate .} =
     # These are the clauses for the bound variables
     for c in tail(obj):
       child.expectMinLen(2)
-      decl.add(newIdentDefs(c[1], newEmptyNode(), newDotExpr(sym, c[0])))
+      # ignore bindings to _
+      if $(c[1]) != "_":
+        decl.add(newIdentDefs(c[1], newEmptyNode(), newDotExpr(sym, c[0])))
 
     # We transform the matching branch
     # into a declaration of bound variables
@@ -75,26 +151,6 @@ macro match*(e: expr, body: stmt): stmt {. immediate .} =
   result = newNimNode(nnkStmtList)
   result.add(newLetStmt(sym, e))
   result.add(dispatch)
-  # echo treeRepr(result)
-  # echo toStrLit(result)
 
-when isMainModule:
-  type
-    ShapeKind = enum
-      Circle, Rectangle
-    Shape = object
-      case kind: ShapeKind
-      of Circle:
-        r: float
-      of Rectangle:
-        w, h: float
-
-  proc makeRect(w, h: float): Shape =
-    Shape(kind: Rectangle, w: w, h: h)
-
-  match makeRect(3, 4):
-    Circle(r: r):
-      echo "circle ", r
-    Rectangle(w: a, h: b):
-      echo "rectangle ", (a + b)
-      echo "it works!"
+  when defined(pattydebug):
+    echo toStrLit(result)
