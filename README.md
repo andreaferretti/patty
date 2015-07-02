@@ -86,25 +86,36 @@ and expands to
 
 ```nim
 type
-  ShapeKind = enum
+  ShapeE = enum
     Circle, Rectangle
   Shape = object
-    case kind: ShapeKind
-    of Circle:
+    case kind: ShapeE
+    of CircleE:
       r: float
-    of Rectangle:
+    of RectangleE:
       w: float
       h: float
-    of UnitCircle:
+    of UnitCircleE:
       nil
+
+proc Circle(r: float; x: float; y: float): Shape =
+  Shape(kind: CircleE, r: r)
+
+proc Rectangle(w: float; h: float): Shape =
+  Shape(kind: RectangleE, w: w, h: h)
+
+proc UnitCircle(side: int): Shape =
+  Shape(kind: UnitCircleE)
 ```
+
+Notice that the macro also generates three convenient constructors (`Circle` ,`Rectangle` and `UnitCircle`), and in fact the names in the enum are `CircleE`, `RectangleE` and `UnitCircleE` to avoid a name conflict.
 
 A couple of limitations fo the `adt` macro:
 
 * field names must be unique across branches (that is, different variants cannot have two fields with the same name). This is actually a limitation of Nim.
 * the shortcut that groups field names by type does not seem to work, that is, in the above example one could not write `Rectangle(w, h: float)`.
 
-In the future, Patty will also add a proper definition of equality and generated contructors.
+In the future, Patty will also add a proper definition of equality.
 
 Things that do not work (yet)
 -----------------------------

@@ -1,21 +1,26 @@
 import macros
 
+const enumSuffix = "E"
+
 iterator tail(a: NimNode): NimNode =
   var first = true
   for x in children(a):
     if not first: yield x
     first = false
 
+proc `&`(n: NimNode, s: string): NimNode {. compileTime .} =
+  n.expectKind(nnkIdent)
+  result = ident($(n) & s)
+
 proc enumsIn(n: NimNode): seq[NimNode] {. compileTime .} =
   result = @[]
   for c in children(n):
     if c.kind == nnkObjConstr:
-    # c.expectKind(nnkObjConstr)
       let id = c[0]
       id.expectKind(nnkIdent)
-      result.add(id)
+      result.add(id & enumSuffix)
     elif c.kind == nnkIdent:
-      result.add(c)
+      result.add(c & enumSuffix)
     else:
       error("Invalid ADT case: " & $(toStrLit(c)))
 
@@ -29,7 +34,7 @@ proc newEnum(name: NimNode, idents: seq[NimNode]): NimNode {. compileTime .} =
 proc makeBranch(n: NimNode): NimNode {. compileTime .} =
   result = newNimNode(nnkOfBranch)
   if n.kind == nnkObjConstr:
-    let id = n[0]
+    let id = n[0] & enumSuffix
     var list = newNimNode(nnkRecList)
     for e in tail(n):
       e.expectKind(nnkExprColonExpr)
@@ -37,7 +42,7 @@ proc makeBranch(n: NimNode): NimNode {. compileTime .} =
       list.add(newIdentDefs(e[0], e[1]))
     result.add(id, list)
   elif n.kind == nnkIdent:
-    result.add(n, newNimNode(nnkRecList).add(newNilLit()))
+    result.add(n & enumSuffix, newNimNode(nnkRecList).add(newNilLit()))
   else:
       error("Invalid ADT case: " & $(toStrLit(n)))
 
@@ -51,7 +56,7 @@ proc defineTypes(e, body: NimNode): NimNode {. compileTime .} =
   #
   # Here we first extract the external identifiers (Circle, Rectangle)
   # that will be the possible values of the kind enum.
-  let enumName = ident($(e) & "Enum")
+  let enumName = ident($(e) & enumSuffix)
   let enumType = newEnum(enumName, enumsIn(body))
 
   # Then we put the actual type we are defining
@@ -73,8 +78,42 @@ proc defineTypes(e, body: NimNode): NimNode {. compileTime .} =
   result.add(enumType)
   result.add(definedType)
 
+proc defineConstructor(e, n: NimNode): NimNode  {. compileTime .} =
+  if n.kind == nnkObjConstr:
+    var params = @[e]
+    for c in tail(n):
+      c.expectKind(nnkExprColonExpr)
+      c.expectMinLen(2)
+      params.add(newIdentDefs(c[0], c[1]))
+
+    var constr = newNimNode(nnkObjConstr).add(
+      e, newColonExpr(ident("kind"), n[0] & enumSuffix))
+    for c in tail(n):
+      c.expectKind(nnkExprColonExpr)
+      c.expectMinLen(2)
+      constr.add(newColonExpr(c[0], c[0]))
+
+    result = newProc(
+      name = n[0],
+      params = params,
+      body = newStmtList().add(constr)
+    )
+  elif n.kind == nnkIdent:
+    var constr = newNimNode(nnkObjConstr).add(
+      e, newColonExpr(ident("kind"), n & enumSuffix))
+    result = newProc(
+      name = n,
+      params = [e],
+      body = newStmtList().add(constr)
+    )
+  else:
+      error("Invalid ADT case: " & $(toStrLit(n)))
+
 macro adt*(e: expr, body: stmt): stmt {. immediate .} =
-  result = defineTypes(e, body)
+  result = newStmtList(defineTypes(e, body))
+
+  for child in children(body):
+    result.add(defineConstructor(e, child))
   when defined(pattydebug):
     echo toStrLit(result)
 

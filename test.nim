@@ -8,7 +8,7 @@ suite "adt construction":
       Rectangle(w: float, h: float)
       Square(side: int)
 
-    let c = Shape(kind: Circle, r: 4, x: 2, y: 0)
+    let c = Shape(kind: CircleE, r: 4, x: 2, y: 0)
     check c.r == 4.0
 
   test "allowing empty objects":
@@ -18,9 +18,28 @@ suite "adt construction":
       Square(side: int)
       UnitCircle
 
-    let r = Shape(kind: Rectangle, w: 2, h: 5)
+    let r = Shape(kind: RectangleE, w: 2, h: 5)
     check r.h == 5.0
 
+  test "constructor creation":
+    adt Shape:
+      Circle(r: float, x: float, y: float)
+      Rectangle(w: float, h: float)
+      Square(side: int)
+
+    let c = Circle(r = 4, x = 2, y = 0)
+    check c.kind == CircleE
+    check c.r == 4.0
+
+  test "constructor of constant objects":
+    adt Shape:
+      Circle(r: float, x: float, y: float)
+      Rectangle(w: float, h: float)
+      Square(side: int)
+      UnitCircle
+
+    let c = UnitCircle()
+    check c.kind == UnitCircleE
 
 suite "pattern matching":
   type
