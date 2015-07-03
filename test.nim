@@ -1,4 +1,4 @@
-import unittest, patty
+import unittest, patty, macros
 
 
 suite "adt construction":
@@ -40,6 +40,19 @@ suite "adt construction":
 
     let c = UnitCircle()
     check c.kind == UnitCircleE
+
+  test "recusive types":
+    adt IntList:
+      Nil
+      Cons(head: int, tail: ref IntList)
+
+    proc inew[A](a: A): ref A =
+      new(result)
+      result[] = a
+
+    var d = Cons(3, inew(Cons(2, inew(Cons(1, inew(Nil()))))))
+    check d.head == 3
+    check d.tail.head == 2
 
 suite "pattern matching":
   type

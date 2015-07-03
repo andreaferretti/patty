@@ -1,7 +1,7 @@
 Patty - A pattern matching library
 ==================================
 
-Patty is a library to perform pattern matching in Nim. The patterns have to be variant objects, which in Nim are encoded with a field (usually called `kind`) which varies in an enum, and a different object layout based on the value of this tag. An example would be
+Patty is a library to perform pattern matching in Nim. The patterns have to be [variant objects](http://nim-lang.org/docs/manual.html#types-object-variants), which in Nim are encoded with a field (usually called `kind`) which varies in an enum, and a different object layout based on the value of this tag. An example would be
 
 ```nim
 type
@@ -87,7 +87,7 @@ and expands to
 ```nim
 type
   ShapeE = enum
-    Circle, Rectangle
+    CircleE, RectangleE, UnitCircleE
   Shape = object
     case kind: ShapeE
     of CircleE:
@@ -115,7 +115,7 @@ A couple of limitations fo the `adt` macro:
 * field names must be unique across branches (that is, different variants cannot have two fields with the same name). This is actually a limitation of Nim.
 * the shortcut that groups field names by type does not seem to work, that is, in the above example one could not write `Rectangle(w, h: float)`.
 
-In the future, Patty will also add a proper definition of equality.
+In the future, Patty will also add a proper definition of equality and copy constructors. Also, some work needs to be done to make it easier to use the generated contructors with `ref` types, in particular for the important case of recursive algebraic data types.
 
 Things that do not work (yet)
 -----------------------------
@@ -236,7 +236,7 @@ match c:
     echo "hello ", name
 ```
 
-* or combinations of patterns
+* combining patterns with `or`
 
 ```nim
 match c:
