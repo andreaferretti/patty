@@ -115,7 +115,7 @@ A couple of limitations fo the `adt` macro:
 * field names must be unique across branches (that is, different variants cannot have two fields with the same name). This is actually a limitation of Nim.
 * the shortcut that groups field names by type does not seem to work, that is, in the above example one could not write `Rectangle(w, h: float)`.
 
-In the future, Patty will also add a proper definition of equality and copy constructors. Also, some work needs to be done to make it easier to use the generated contructors with `ref` types, in particular for the important case of recursive algebraic data types.
+In the future, Patty may also add copy constructors. Also, some work needs to be done to make it easier to use the generated contructors with `ref` types, in particular for the important case of recursive algebraic data types.
 
 Things that do not work (yet)
 -----------------------------

@@ -1,4 +1,4 @@
-import macros
+import macros, sequtils
 
 const enumSuffix = "E"
 
@@ -109,13 +109,60 @@ proc defineConstructor(e, n: NimNode): NimNode  {. compileTime .} =
   else:
       error("Invalid ADT case: " & $(toStrLit(n)))
 
+proc eqFor(n: NimNode): NimNode {. compileTime .} =
+  if n.kind == nnkObjConstr:
+    result = newNimNode(nnkOfBranch).add(n[0] & enumSuffix)
+    var comparisons: seq[NimNode] = @[]
+
+    for c in tail(n):
+      comparisons.add(infix(newDotExpr(ident("a"), c[0]), "==", newDotExpr(ident("b"), c[0])))
+
+    let body = foldr(comparisons, infix(a, "and", b))
+
+    result.add(newStmtList(newNimNode(nnkReturnStmt).add(body)))
+  elif n.kind == nnkIdent:
+    result = newNimNode(nnkOfBranch).add(n & enumSuffix)
+    result.add(newStmtList(newNimNode(nnkReturnStmt).add(ident("true"))))
+  else:
+    error("Invalid ADT case: " & $(toStrLit(n)))
+
+
+proc defineEquality(tp, body: NimNode): NimNode {. compileTime .} =
+  # template compare(content, tp: NimNode) =
+  #   proc `==`(a, b: tp): bool =
+  #     if a.kind == b.kind: content
+  #     else: false
+  var condition = newNimNode(nnkCaseStmt).add(newDotExpr(ident("a"), ident("kind")))
+  for child in children(body):
+    condition.add(eqFor(child))
+
+  var body = newNimNode(nnkIfExpr).add(
+    newNimNode(nnkElifBranch).add(
+      infix(newDotExpr(ident("a"), ident("kind")), "==", newDotExpr(ident("b"), ident("kind"))),
+      condition
+    ),
+    newNimNode(nnkElse).add(newStmtList(newNimNode(nnkReturnStmt).add(ident("false"))))
+  )
+
+  result = newProc(
+    name = ident("`==`"),
+    params = [ident("bool"), newIdentDefs(ident("a"), tp), newIdentDefs(ident("b"), tp)],
+    body = body
+  )
+  # result = getAst(compare(condition, tp))
+
 macro adt*(e: expr, body: stmt): stmt {. immediate .} =
-  result = newStmtList(defineTypes(e, body))
+  result = newStmtList(defineTypes(e, body), defineEquality(e, body))
 
   for child in children(body):
     result.add(defineConstructor(e, child))
   when defined(pattydebug):
     echo toStrLit(result)
+
+adt Shape:
+  Circle(r: float, x: float, y: float)
+  Rectangle(w: float, h: float)
+  Square(side: int)
 
 macro match*(e: expr, body: stmt): stmt {. immediate .} =
   # A fresh symbol used to hold the evaluation of e
