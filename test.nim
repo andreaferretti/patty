@@ -41,7 +41,7 @@ suite "adt construction":
     let c = UnitCircle()
     check c.kind == UnitCircleE
 
-  test "recusive types":
+  test "recursive types":
     adt IntList:
       Nil
       Cons(head: int, tail: ref IntList)
@@ -53,6 +53,25 @@ suite "adt construction":
     var d = Cons(3, inew(Cons(2, inew(Cons(1, inew(Nil()))))))
     check d.head == 3
     check d.tail.head == 2
+
+  test "generated equality":
+    adt Shape:
+      Circle(r: float, x: float, y: float)
+      Rectangle(w: float, h: float)
+      Square(side: int)
+      UnitCircle
+
+    let
+      c1 = Circle(r = 3, x = 2, y = 5)
+      c2 = Circle(r = 3, x = 2, y = 5)
+      c3 = Circle(r = 2, x = 3, y = 5)
+      s = Square(3)
+      u1 = UnitCircle()
+      u2 = UnitCircle()
+    check c1 == c2
+    check c1 != c3
+    check c1 != s
+    check u1 == u2
 
 suite "pattern matching":
   type

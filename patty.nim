@@ -145,9 +145,9 @@ proc defineEquality(tp, body: NimNode): NimNode {. compileTime .} =
   )
 
   result = newProc(
-    name = ident("`==`"),
+    name = ident("=="),
     params = [ident("bool"), newIdentDefs(ident("a"), tp), newIdentDefs(ident("b"), tp)],
-    body = body
+    body = newStmtList(body)
   )
   # result = getAst(compare(condition, tp))
 
@@ -158,11 +158,6 @@ macro adt*(e: expr, body: stmt): stmt {. immediate .} =
     result.add(defineConstructor(e, child))
   when defined(pattydebug):
     echo toStrLit(result)
-
-adt Shape:
-  Circle(r: float, x: float, y: float)
-  Rectangle(w: float, h: float)
-  Square(side: int)
 
 macro match*(e: expr, body: stmt): stmt {. immediate .} =
   # A fresh symbol used to hold the evaluation of e

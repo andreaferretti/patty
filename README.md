@@ -98,6 +98,18 @@ type
     of UnitCircleE:
       nil
 
+proc `==`(a: Shape; b: Shape): bool =
+  if a.kind == b.kind:
+    case a.kind
+    of CircleE:
+      return a.r == b.r
+    of RectangleE:
+      return a.w == b.w and a.h == b.h
+    of UnitCircleE:
+      return true
+  else:
+    return false
+
 proc Circle(r: float; x: float; y: float): Shape =
   Shape(kind: CircleE, r: r)
 
@@ -108,7 +120,7 @@ proc UnitCircle(side: int): Shape =
   Shape(kind: UnitCircleE)
 ```
 
-Notice that the macro also generates three convenient constructors (`Circle` ,`Rectangle` and `UnitCircle`), and in fact the names in the enum are `CircleE`, `RectangleE` and `UnitCircleE` to avoid a name conflict.
+Notice that the macro also generates three convenient constructors (`Circle` ,`Rectangle` and `UnitCircle`), and in fact the names in the enum are `CircleE`, `RectangleE` and `UnitCircleE` to avoid a name conflict. Also, a proper definition of equality based on the actual contents of the record is generated.
 
 A couple of limitations fo the `adt` macro:
 
