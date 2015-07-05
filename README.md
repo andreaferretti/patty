@@ -76,7 +76,7 @@ Notice that Patty requires the field you dispatch on to be called `kind`. Also, 
 Patty also provides another macro to create algebraic data types. It looks like
 
 ```nim
-adt Shape:
+variant Shape:
   Circle(r: float)
   Rectangle(w: float, h: float)
   UnitCircle
@@ -122,7 +122,7 @@ proc UnitCircle(side: int): Shape =
 
 Notice that the macro also generates three convenient constructors (`Circle` ,`Rectangle` and `UnitCircle`), and in fact the names in the enum are `CircleE`, `RectangleE` and `UnitCircleE` to avoid a name conflict. Also, a proper definition of equality based on the actual contents of the record is generated.
 
-A couple of limitations fo the `adt` macro:
+A couple of limitations fo the `variant` macro:
 
 * field names must be unique across branches (that is, different variants cannot have two fields with the same name). This is actually a limitation of Nim.
 * the shortcut that groups field names by type does not seem to work, that is, in the above example one could not write `Rectangle(w, h: float)`.

@@ -1,9 +1,9 @@
 import unittest, patty, macros
 
 
-suite "adt construction":
+suite "variant construction":
   test "basic creation":
-    adt Shape:
+    variant Shape:
       Circle(r: float, x: float, y: float)
       Rectangle(w: float, h: float)
       Square(side: int)
@@ -12,7 +12,7 @@ suite "adt construction":
     check c.r == 4.0
 
   test "allowing empty objects":
-    adt Shape:
+    variant Shape:
       Circle(r: float, x: float, y: float)
       Rectangle(w: float, h: float)
       Square(side: int)
@@ -22,7 +22,7 @@ suite "adt construction":
     check r.h == 5.0
 
   test "constructor creation":
-    adt Shape:
+    variant Shape:
       Circle(r: float, x: float, y: float)
       Rectangle(w: float, h: float)
       Square(side: int)
@@ -32,7 +32,7 @@ suite "adt construction":
     check c.r == 4.0
 
   test "constructor of constant objects":
-    adt Shape:
+    variant Shape:
       Circle(r: float, x: float, y: float)
       Rectangle(w: float, h: float)
       Square(side: int)
@@ -42,7 +42,7 @@ suite "adt construction":
     check c.kind == UnitCircleE
 
   test "recursive types":
-    adt IntList:
+    variant IntList:
       Nil
       Cons(head: int, tail: ref IntList)
 
@@ -55,7 +55,7 @@ suite "adt construction":
     check d.tail.head == 2
 
   test "generated equality":
-    adt Shape:
+    variant Shape:
       Circle(r: float, x: float, y: float)
       Rectangle(w: float, h: float)
       Square(side: int)

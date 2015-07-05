@@ -151,7 +151,7 @@ proc defineEquality(tp, body: NimNode): NimNode {. compileTime .} =
   )
   # result = getAst(compare(condition, tp))
 
-macro adt*(e: expr, body: stmt): stmt {. immediate .} =
+macro variant*(e: expr, body: stmt): stmt {. immediate .} =
   result = newStmtList(defineTypes(e, body), defineEquality(e, body))
 
   for child in children(body):
