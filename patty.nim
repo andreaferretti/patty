@@ -199,7 +199,7 @@ proc matchBranch(n, sym: NimNode): NimNode {. compileTime .} =
   kindId.expectKind(nnkIdent)
   result = newNimNode(nnkOfBranch).add(kindId, branchBody)
 
-macro match*(e: expr, body: stmt): stmt {. immediate .} =
+macro match*(e: typed, body: untyped): stmt =
   body.expectKind(nnkStmtList)
   # A fresh symbol used to hold the evaluation of e
   let sym = genSym()
