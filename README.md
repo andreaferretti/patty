@@ -86,41 +86,41 @@ and expands to
 
 ```nim
 type
-  ShapeE = enum
-    CircleE, RectangleE, UnitCircleE
+  ShapeKind {.pure.} = enum
+    Circle, Rectangle, UnitCircle
   Shape = object
-    case kind: ShapeE
-    of CircleE:
+    case kind: ShapeKind
+    of ShapeKind,Circle:
       r: float
-    of RectangleE:
+    of ShapeKind,Rectangle:
       w: float
       h: float
-    of UnitCircleE:
+    of ShapeKind,UnitCircle:
       nil
 
 proc `==`(a: Shape; b: Shape): bool =
   if a.kind == b.kind:
     case a.kind
-    of CircleE:
+    of ShapeKind.Circle:
       return a.r == b.r
-    of RectangleE:
+    of ShapeKind.Rectangle:
       return a.w == b.w and a.h == b.h
-    of UnitCircleE:
+    of ShapeKind.UnitCircle:
       return true
   else:
     return false
 
 proc Circle(r: float; x: float; y: float): Shape =
-  Shape(kind: CircleE, r: r)
+  Shape(kind: ShapeKind.Circle, r: r)
 
 proc Rectangle(w: float; h: float): Shape =
-  Shape(kind: RectangleE, w: w, h: h)
+  Shape(kind: ShapeKind.Rectangle, w: w, h: h)
 
 proc UnitCircle(side: int): Shape =
-  Shape(kind: UnitCircleE)
+  Shape(kind: ShapeKind.UnitCircle)
 ```
 
-Notice that the macro also generates three convenient constructors (`Circle` ,`Rectangle` and `UnitCircle`), and in fact the names in the enum are `CircleE`, `RectangleE` and `UnitCircleE` to avoid a name conflict. Also, a proper definition of equality based on the actual contents of the record is generated.
+Notice that the macro also generates three convenient constructors (`Circle` ,`Rectangle` and `UnitCircle`), and in fact the enum is pure to avoid a name conflict. Also, a proper definition of equality based on the actual contents of the record is generated.
 
 A couple of limitations fo the `variant` macro:
 
