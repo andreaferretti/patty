@@ -90,12 +90,12 @@ type
     Circle, Rectangle, UnitCircle
   Shape = object
     case kind: ShapeKind
-    of ShapeKind,Circle:
+    of ShapeKind.Circle:
       r: float
-    of ShapeKind,Rectangle:
+    of ShapeKind.Rectangle:
       w: float
       h: float
-    of ShapeKind,UnitCircle:
+    of ShapeKind.UnitCircle:
       nil
 
 proc `==`(a: Shape; b: Shape): bool =
