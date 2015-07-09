@@ -8,7 +8,7 @@ suite "variant construction":
       Rectangle(w: float, h: float)
       Square(side: int)
 
-    let c = Shape(kind: CircleE, r: 4, x: 2, y: 0)
+    let c = Shape(kind: ShapeKind.Circle, r: 4, x: 2, y: 0)
     check c.r == 4.0
 
   test "allowing empty objects":
@@ -18,7 +18,7 @@ suite "variant construction":
       Square(side: int)
       UnitCircle
 
-    let r = Shape(kind: RectangleE, w: 2, h: 5)
+    let r = Shape(kind: ShapeKind.Rectangle, w: 2, h: 5)
     check r.h == 5.0
 
   test "constructor creation":
@@ -28,7 +28,7 @@ suite "variant construction":
       Square(side: int)
 
     let c = Circle(r = 4, x = 2, y = 0)
-    check c.kind == CircleE
+    check c.kind == ShapeKind.Circle
     check c.r == 4.0
 
   test "constructor of constant objects":
@@ -39,7 +39,7 @@ suite "variant construction":
       UnitCircle
 
     let c = UnitCircle()
-    check c.kind == UnitCircleE
+    check c.kind == ShapeKind.UnitCircle
 
   test "recursive types":
     variant IntList:

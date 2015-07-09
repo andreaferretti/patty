@@ -1,6 +1,6 @@
 import macros, sequtils
 
-const enumSuffix = "E"
+const enumSuffix = "Kind"
 
 iterator tail(a: NimNode): NimNode =
   var first = true
@@ -18,23 +18,26 @@ proc enumsIn(n: NimNode): seq[NimNode] {. compileTime .} =
     if c.kind == nnkObjConstr:
       let id = c[0]
       id.expectKind(nnkIdent)
-      result.add(id & enumSuffix)
+      result.add(id)
     elif c.kind == nnkIdent:
-      result.add(c & enumSuffix)
+      result.add(c)
     else:
       error("Invalid ADT case: " & $(toStrLit(c)))
 
 proc newEnum(name: NimNode, idents: seq[NimNode]): NimNode {. compileTime .} =
-  result = newNimNode(nnkTypeDef).add(name, newEmptyNode())
+  result = newNimNode(nnkTypeDef).add(
+    newNimNode(nnkPragmaExpr).add(name).add(
+      newNimNode(nnkPragma).add(ident("pure"))),
+    newEmptyNode())
   var choices = newNimNode(nnkEnumTy).add(newEmptyNode())
   for ident in idents:
     choices.add(ident)
   result.add(choices)
 
-proc makeBranch(n: NimNode): NimNode {. compileTime .} =
+proc makeBranch(base: NimNode, n: NimNode): NimNode {. compileTime .} =
   result = newNimNode(nnkOfBranch)
   if n.kind == nnkObjConstr:
-    let id = n[0] & enumSuffix
+    let id = newNimNode(nnkDotExpr).add(base, n[0])
     var list = newNimNode(nnkRecList)
     for e in tail(n):
       e.expectKind(nnkExprColonExpr)
@@ -42,7 +45,7 @@ proc makeBranch(n: NimNode): NimNode {. compileTime .} =
       list.add(newIdentDefs(e[0], e[1]))
     result.add(id, list)
   elif n.kind == nnkIdent:
-    result.add(n & enumSuffix, newNimNode(nnkRecList).add(newNilLit()))
+    result.add(newNimNode(nnkDotExpr).add(base, n), newNimNode(nnkRecList).add(newNilLit()))
   else:
       error("Invalid ADT case: " & $(toStrLit(n)))
 
@@ -62,7 +65,7 @@ proc defineTypes(e, body: NimNode): NimNode {. compileTime .} =
   # Then we put the actual type we are defining
   var cases = newNimNode(nnkRecCase).add(newIdentDefs(ident("kind"), enumName))
   for child in children(body):
-    cases.add(makeBranch(child))
+    cases.add(makeBranch(enumName, child))
 
   let definedType = newNimNode(nnkTypeDef).add(
     e,
@@ -79,6 +82,7 @@ proc defineTypes(e, body: NimNode): NimNode {. compileTime .} =
   result.add(definedType)
 
 proc defineConstructor(e, n: NimNode): NimNode  {. compileTime .} =
+  let base = ident($(e)) & enumSuffix
   if n.kind == nnkObjConstr:
     var params = @[e]
     for c in tail(n):
@@ -87,7 +91,7 @@ proc defineConstructor(e, n: NimNode): NimNode  {. compileTime .} =
       params.add(newIdentDefs(c[0], c[1]))
 
     var constr = newNimNode(nnkObjConstr).add(
-      e, newColonExpr(ident("kind"), n[0] & enumSuffix))
+      e, newColonExpr(ident("kind"), newNimNode(nnkDotExpr).add(base, n[0])))
     for c in tail(n):
       c.expectKind(nnkExprColonExpr)
       c.expectMinLen(2)
@@ -100,7 +104,7 @@ proc defineConstructor(e, n: NimNode): NimNode  {. compileTime .} =
     )
   elif n.kind == nnkIdent:
     var constr = newNimNode(nnkObjConstr).add(
-      e, newColonExpr(ident("kind"), n & enumSuffix))
+      e, newColonExpr(ident("kind"), newNimNode(nnkDotExpr).add(base, n)))
     result = newProc(
       name = n,
       params = [e],
@@ -109,9 +113,10 @@ proc defineConstructor(e, n: NimNode): NimNode  {. compileTime .} =
   else:
       error("Invalid ADT case: " & $(toStrLit(n)))
 
-proc eqFor(n: NimNode): NimNode {. compileTime .} =
+proc eqFor(e, n: NimNode): NimNode {. compileTime .} =
+  let base = ident($(e)) & enumSuffix
   if n.kind == nnkObjConstr:
-    result = newNimNode(nnkOfBranch).add(n[0] & enumSuffix)
+    result = newNimNode(nnkOfBranch).add(newNimNode(nnkDotExpr).add(base, n[0]))
     var comparisons: seq[NimNode] = @[]
 
     for c in tail(n):
@@ -121,7 +126,7 @@ proc eqFor(n: NimNode): NimNode {. compileTime .} =
 
     result.add(newStmtList(newNimNode(nnkReturnStmt).add(body)))
   elif n.kind == nnkIdent:
-    result = newNimNode(nnkOfBranch).add(n & enumSuffix)
+    result = newNimNode(nnkOfBranch).add(newNimNode(nnkDotExpr).add(base, n))
     result.add(newStmtList(newNimNode(nnkReturnStmt).add(ident("true"))))
   else:
     error("Invalid ADT case: " & $(toStrLit(n)))
@@ -134,7 +139,7 @@ proc defineEquality(tp, body: NimNode): NimNode {. compileTime .} =
   #     else: false
   var condition = newNimNode(nnkCaseStmt).add(newDotExpr(ident("a"), ident("kind")))
   for child in children(body):
-    condition.add(eqFor(child))
+    condition.add(eqFor(tp, child))
 
   var body = newNimNode(nnkIfExpr).add(
     newNimNode(nnkElifBranch).add(
