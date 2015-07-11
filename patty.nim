@@ -204,24 +204,41 @@ proc matchBranch(n, sym: NimNode): NimNode {. compileTime .} =
   kindId.expectKind(nnkIdent)
   result = newNimNode(nnkOfBranch).add(kindId, branchBody)
 
-macro match*(e: typed, body: untyped): stmt =
-  body.expectKind(nnkStmtList)
-  # A fresh symbol used to hold the evaluation of e
-  let sym = genSym()
+proc isObject(tp: NimNode): bool {. compileTime .} =
+  (tp.kind == nnkObjectTy) and (tp[1].kind != nnkRecList)
+
+proc isVariant(tp: NimNode): bool {. compileTime .} =
+  (tp.kind == nnkObjectTy) and (tp[1].kind == nnkRecList)
+
+proc matchSimple(e, statements, sym: NimNode): NimNode {. compileTime .} =
+  discard
+
+proc matchVariant(e, statements, sym: NimNode): NimNode {. compileTime .} =
   # The node for the dispatch statement
   #
   # case :tmp.kind of:
   # ...
-  var dispatch = newNimNode(nnkCaseStmt).add(newDotExpr(sym, ident("kind")))
-  for child in children(body):
-    dispatch.add(matchBranch(child, sym))
+  result = newNimNode(nnkCaseStmt).add(newDotExpr(sym, ident("kind")))
+  for child in children(statements):
+    result.add(matchBranch(child, sym))
+
+macro match*(e: typed, statements: untyped): stmt =
+  statements.expectKind(nnkStmtList)
+  let
+    exprType = getType(e)
+    isSimpleObject = isObject(exprType)
+    isVariantObject = isVariant(exprType)
+  # A fresh symbol used to hold the evaluation of e
+  let sym = genSym()
+  let body = if isSimpleObject: matchSimple(e, statements, sym)
+    else: matchVariant(e, statements, sym)
 
   # The whole thing is translated into a
   # declaration section where our temporary
   # symbol is assigned the value of e,
   # followed by the switch statement constructed
   # above
-  result = newStmtList(newLetStmt(sym, e), dispatch)
+  result = newStmtList(newLetStmt(sym, e), body)
 
   when defined(pattydebug):
     echo toStrLit(result)
