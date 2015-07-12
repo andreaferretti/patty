@@ -171,6 +171,10 @@ proc isObject(tp: NimNode): bool {. compileTime .} =
 proc isVariant(tp: NimNode): bool {. compileTime .} =
   (tp.kind == nnkObjectTy) and (tp[1][0].kind == nnkRecCase)
 
+proc discriminator(tp: NimNode): NimNode {. compileTime .} =
+  if (tp.kind == nnkObjectTy) and (tp[1][0].kind == nnkRecCase): tp[1][0][0]
+  else: nil
+
 proc matchSimple(n, sym: NimNode): NimNode {. compileTime .} =
   n.expectKind(nnkCall)
   n.expectMinLen(2)
@@ -212,12 +216,12 @@ proc matchBranch(n, sym: NimNode): NimNode {. compileTime .} =
   kindId.expectKind(nnkIdent)
   result = newNimNode(nnkOfBranch).add(kindId, matchSimple(n, sym))
 
-proc matchVariant(e, statements, sym: NimNode): NimNode {. compileTime .} =
+proc matchVariant(e, statements, sym, disc: NimNode): NimNode {. compileTime .} =
   # The node for the dispatch statement
   #
   # case :tmp.kind of:
   # ...
-  result = newNimNode(nnkCaseStmt).add(newDotExpr(sym, ident("kind")))
+  result = newNimNode(nnkCaseStmt).add(newDotExpr(sym, disc))
   for child in children(statements):
     result.add(matchBranch(child, sym))
 
@@ -227,11 +231,14 @@ macro match*(e: typed, statements: untyped): stmt =
     exprType = getType(e)
     isSimpleObject = isObject(exprType)
     isVariantObject = isVariant(exprType)
+    disc = discriminator(exprType)
+
+  echo treeRepr(exprType)
 
   # A fresh symbol used to hold the evaluation of e
   let sym = genSym()
   let body = if isSimpleObject: matchSimple(statements[0], sym)
-    else: matchVariant(e, statements, sym)
+    else: matchVariant(e, statements, sym, disc)
 
   # The whole thing is translated into a
   # declaration section where our temporary

@@ -86,6 +86,14 @@ suite "pattern matching":
     Person = object
       name, surname: string
       age: int
+    FruitKind = enum
+      Apple, Pear
+    Fruit = object
+      case fruit: FruitKind
+      of Apple:
+        radius, weight: float
+      of Pear:
+        circumference, height: float
 
   test "basic matching":
     let c = Shape(kind: Circle, r: 4, x: 2, y: 0)
@@ -136,3 +144,13 @@ suite "pattern matching":
       Person(name: n, surname: s, age: a):
         res = n
     check res == "Andrea"
+
+  test "basic matching with a different discriminator":
+    let a = Fruit(fruit: Apple, radius: 4, weight: 200)
+    var res: float = 0
+    match a:
+      Apple(radius: r, weight: w):
+        res = w
+      Pear(circumference: c, height: h):
+        res = 1
+    check res == 200.0

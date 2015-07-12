@@ -71,7 +71,7 @@ of Rectangle:
   echo "it is a rectangle of height ", height
 ```
 
-Notice that Patty requires the field you dispatch on to be called `kind`. Also, checks are exhaustive: if you miss a case, the compiler will complain.
+Notice that in the examples, the field you dispatch on is called `kind`, but any other name would do. Also, checks are exhaustive: if you miss a case, the compiler will complain.
 
 One can instead pattern-match on non-variant objects, which essentially amounts to deconstructing fields:
 
