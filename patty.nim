@@ -233,8 +233,6 @@ macro match*(e: typed, statements: untyped): stmt =
     isVariantObject = isVariant(exprType)
     disc = discriminator(exprType)
 
-  echo treeRepr(exprType)
-
   # A fresh symbol used to hold the evaluation of e
   let sym = genSym()
   let body = if isSimpleObject: matchSimple(statements[0], sym)
