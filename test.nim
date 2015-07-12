@@ -83,6 +83,9 @@ suite "pattern matching":
         x, y, r: float
       of Rectangle:
         w, h: float
+    Person = object
+      name, surname: string
+      age: int
 
   test "basic matching":
     let c = Shape(kind: Circle, r: 4, x: 2, y: 0)
@@ -125,3 +128,11 @@ suite "pattern matching":
       Rectangle(w: w, h: h):
         res = w + h
     check res == 4.0
+
+  test "matching a simple object":
+    let c = Person(name: "Andrea", surname: "Ferretti", age: 34)
+    var res: string = ""
+    match c:
+      Person(name: n, surname: s, age: a):
+        res = n
+    check res == "Andrea"

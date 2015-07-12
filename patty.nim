@@ -165,7 +165,13 @@ macro variant*(e: expr, body: stmt): stmt {. immediate .} =
     echo toStrLit(result)
 
 
-proc matchBranch(n, sym: NimNode): NimNode {. compileTime .} =
+proc isObject(tp: NimNode): bool {. compileTime .} =
+  (tp.kind == nnkObjectTy) and (tp[1][0].kind != nnkRecCase)
+
+proc isVariant(tp: NimNode): bool {. compileTime .} =
+  (tp.kind == nnkObjectTy) and (tp[1][0].kind == nnkRecCase)
+
+proc matchSimple(n, sym: NimNode): NimNode {. compileTime .} =
   n.expectKind(nnkCall)
   n.expectMinLen(2)
 
@@ -173,13 +179,6 @@ proc matchBranch(n, sym: NimNode): NimNode {. compileTime .} =
     obj = n[0]
     statements = n[1]
   statements.expectKind(nnkStmtList)
-
-  # We have a few cases for obj (the matching part)
-  # It could be
-  # - a matching clause like Circle(r: r)
-  # - a literal (not yet)
-  # - a bound or unbound variable (not yet)
-  obj.expectKind(nnkObjConstr)
 
   # This is the new declaration section
   var decl = newNimNode(nnkLetSection)
@@ -196,22 +195,22 @@ proc matchBranch(n, sym: NimNode): NimNode {. compileTime .} =
   #
   # let r = :tmp.r
   # ...
-  var branchBody = newNimNode(nnkStmtList).add(decl)
+  result = newNimNode(nnkStmtList).add(decl)
   for c in children(statements):
-    branchBody.add(c)
+    result.add(c)
+
+proc matchBranch(n, sym: NimNode): NimNode {. compileTime .} =
+  let obj = n[0]
+  # We have a few cases for obj (the matching part)
+  # It could be
+  # - a matching clause like Circle(r: r)
+  # - a literal (not yet)
+  # - a bound or unbound variable (not yet)
+  obj.expectKind(nnkObjConstr)
   # This is the thing we dispatch on
   let kindId = obj[0]
   kindId.expectKind(nnkIdent)
-  result = newNimNode(nnkOfBranch).add(kindId, branchBody)
-
-proc isObject(tp: NimNode): bool {. compileTime .} =
-  (tp.kind == nnkObjectTy) and (tp[1].kind != nnkRecList)
-
-proc isVariant(tp: NimNode): bool {. compileTime .} =
-  (tp.kind == nnkObjectTy) and (tp[1].kind == nnkRecList)
-
-proc matchSimple(e, statements, sym: NimNode): NimNode {. compileTime .} =
-  discard
+  result = newNimNode(nnkOfBranch).add(kindId, matchSimple(n, sym))
 
 proc matchVariant(e, statements, sym: NimNode): NimNode {. compileTime .} =
   # The node for the dispatch statement
@@ -228,9 +227,10 @@ macro match*(e: typed, statements: untyped): stmt =
     exprType = getType(e)
     isSimpleObject = isObject(exprType)
     isVariantObject = isVariant(exprType)
+
   # A fresh symbol used to hold the evaluation of e
   let sym = genSym()
-  let body = if isSimpleObject: matchSimple(e, statements, sym)
+  let body = if isSimpleObject: matchSimple(statements[0], sym)
     else: matchVariant(e, statements, sym)
 
   # The whole thing is translated into a
