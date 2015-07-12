@@ -73,6 +73,18 @@ of Rectangle:
 
 Notice that Patty requires the field you dispatch on to be called `kind`. Also, checks are exhaustive: if you miss a case, the compiler will complain.
 
+One can instead pattern-match on non-variant objects, which essentially amounts to deconstructing fields:
+
+```nim
+type Person = object
+  name: string
+  age: int
+let p = Person(name: "John Doe", age: 37)
+match p:
+  Person(name: n, age: a):
+    echo n, "is ", a, " years old"
+```
+
 Patty also provides another macro to create algebraic data types. It looks like
 
 ```nim
@@ -159,18 +171,6 @@ let x = 5
 match c:
   x:
     echo "c == 5"
-```
-
-* irrefutable patterns (no dispatch on `kind`)
-
-```nim
-type Person = object
-  name: string
-  age: int
-let p = Person(name: "John Doe", age: 37)
-match p:
-  Person(name: n, age: a):
-    echo n, "is ", a, " years old"
 ```
 
 * nested pattern matching
