@@ -175,7 +175,7 @@ proc discriminator(tp: NimNode): NimNode {. compileTime .} =
   if (tp.kind == nnkObjectTy) and (tp[1][0].kind == nnkRecCase): tp[1][0][0]
   else: nil
 
-proc matchSimple(n, sym: NimNode): NimNode {. compileTime .} =
+proc matchSimple(n, sym, tp: NimNode): NimNode {. compileTime .} =
   n.expectKind(nnkCall)
   n.expectMinLen(2)
 
@@ -203,7 +203,7 @@ proc matchSimple(n, sym: NimNode): NimNode {. compileTime .} =
   for c in children(statements):
     result.add(c)
 
-proc matchBranch(n, sym: NimNode): NimNode {. compileTime .} =
+proc matchBranch(n, sym, tp: NimNode): NimNode {. compileTime .} =
   let obj = n[0]
   # We have a few cases for obj (the matching part)
   # It could be
@@ -214,16 +214,17 @@ proc matchBranch(n, sym: NimNode): NimNode {. compileTime .} =
   # This is the thing we dispatch on
   let kindId = obj[0]
   kindId.expectKind(nnkIdent)
-  result = newNimNode(nnkOfBranch).add(kindId, matchSimple(n, sym))
+  result = newNimNode(nnkOfBranch).add(kindId, matchSimple(n, sym, tp))
 
-proc matchVariant(e, statements, sym, disc: NimNode): NimNode {. compileTime .} =
+proc matchVariant(statements, sym, tp: NimNode): NimNode {. compileTime .} =
   # The node for the dispatch statement
   #
   # case :tmp.kind of:
   # ...
+  let disc = discriminator(tp)
   result = newNimNode(nnkCaseStmt).add(newDotExpr(sym, disc))
   for child in children(statements):
-    result.add(matchBranch(child, sym))
+    result.add(matchBranch(child, sym, tp))
 
 macro match*(e: typed, statements: untyped): stmt =
   statements.expectKind(nnkStmtList)
@@ -231,12 +232,11 @@ macro match*(e: typed, statements: untyped): stmt =
     exprType = getType(e)
     isSimpleObject = isObject(exprType)
     isVariantObject = isVariant(exprType)
-    disc = discriminator(exprType)
 
   # A fresh symbol used to hold the evaluation of e
   let sym = genSym()
-  let body = if isSimpleObject: matchSimple(statements[0], sym)
-    else: matchVariant(e, statements, sym, disc)
+  let body = if isSimpleObject: matchSimple(statements[0], sym, exprType)
+    else: matchVariant(statements, sym, exprType)
 
   # The whole thing is translated into a
   # declaration section where our temporary
