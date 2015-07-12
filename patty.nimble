@@ -1,6 +1,6 @@
 [Package]
 name          = "patty"
-version       = "0.1.1"
+version       = "0.1.2"
 author        = "Andrea Ferretti"
 description   = "Algebraic data types and pattern matching"
 license       = "Apache2"
