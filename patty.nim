@@ -175,11 +175,17 @@ proc discriminator(tp: NimNode): NimNode {. compileTime .} =
   if (tp.kind == nnkObjectTy) and (tp[1][0].kind == nnkRecCase): tp[1][0][0]
   else: nil
 
-proc choices(tp: NimNode): seq[NimNode] {. compileTime .} =
+proc variants(tp: NimNode): seq[NimNode] {. compileTime .} =
   let disc = discriminator(tp)
   result = @[]
   for e in getType(disc)[0].children:
     result.add(e)
+
+proc resolveSymbol(id: NimNode, syms: seq[NimNode]): NimNode {. compileTime .} =
+  for sym in syms:
+    if $(id) == $(sym):
+      return sym
+  error("Invalid matching clause: " & $(id))
 
 proc matchSimple(n, sym, tp: NimNode): NimNode {. compileTime .} =
   n.expectKind(nnkCall)
@@ -220,7 +226,8 @@ proc matchBranch(n, sym, tp: NimNode): NimNode {. compileTime .} =
   # This is the thing we dispatch on
   let kindId = obj[0]
   kindId.expectKind(nnkIdent)
-  result = newNimNode(nnkOfBranch).add(kindId, matchSimple(n, sym, tp))
+  let kindSym = resolveSymbol(kindId, variants(tp))
+  result = newNimNode(nnkOfBranch).add(kindSym, matchSimple(n, sym, tp))
 
 proc matchVariant(statements, sym, tp: NimNode): NimNode {. compileTime .} =
   # The node for the dispatch statement
