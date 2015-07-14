@@ -175,6 +175,12 @@ proc discriminator(tp: NimNode): NimNode {. compileTime .} =
   if (tp.kind == nnkObjectTy) and (tp[1][0].kind == nnkRecCase): tp[1][0][0]
   else: nil
 
+proc choices(tp: NimNode): seq[NimNode] {. compileTime .} =
+  let disc = discriminator(tp)
+  result = @[]
+  for e in getType(disc)[0].children:
+    result.add(e)
+
 proc matchSimple(n, sym, tp: NimNode): NimNode {. compileTime .} =
   n.expectKind(nnkCall)
   n.expectMinLen(2)
