@@ -220,19 +220,36 @@ proc matchSimple(n, sym, tp: NimNode): NimNode {. compileTime .} =
   for c in children(statements):
     result.add(c)
 
-proc matchBranch(n, sym, tp: NimNode): NimNode {. compileTime .} =
-  let obj = n[0]
-  # We have a few cases for obj (the matching part)
-  # It could be
-  # - a matching clause like Circle(r: r)
-  # - a literal (not yet)
-  # - a bound or unbound variable (not yet)
-  obj.expectKind(nnkObjConstr)
-  # This is the thing we dispatch on
-  let kindId = obj[0]
+proc matchBranchQualified(n, sym, tp: NimNode): NimNode {. compileTime .} =
+  let
+    obj = n[0]
+    kindId = obj[0]
   kindId.expectKind(nnkIdent)
   let (_, kindSym) = resolveSymbol(kindId, variants(tp))
   result = newNimNode(nnkOfBranch).add(kindSym, matchSimple(n, sym, tp))
+
+proc matchBranchImplicit(n, sym, tp: NimNode): NimNode {. compileTime .} =
+  discard
+  # if n[0].kind == nnkObjConstr: matchBranchQualified(n[0], sym, tp)
+  # else: matchBranchImplicit(n, sym, tp)
+  # echo treeRepr(n)
+  # let obj = n[0]
+  # obj.expectKind(nnkObjConstr)
+  # # This is the thing we dispatch on
+  # let kindId = obj[0]
+  # kindId.expectKind(nnkIdent)
+  # let (_, kindSym) = resolveSymbol(kindId, variants(tp))
+  # result = newNimNode(nnkOfBranch).add(kindSym, matchSimple(n, sym, tp))
+
+proc matchBranch(n, sym, tp: NimNode): NimNode {. compileTime .} =
+  # We have a few cases for obj (the matching part)
+  # It could be
+  # - a qualified matching clause like Circle(r: r)
+  # - an implicit matching clause like Circle(r)
+  # - a literal (not yet)
+  # - a bound or unbound variable (not yet)
+  if n[0].kind == nnkObjConstr: matchBranchQualified(n, sym, tp)
+  else: matchBranchImplicit(n, sym, tp)
 
 proc matchVariant(statements, sym, tp: NimNode): NimNode {. compileTime .} =
   # The node for the dispatch statement
