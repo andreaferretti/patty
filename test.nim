@@ -170,3 +170,23 @@ suite "pattern matching":
       Square(side: s):
         res = 1
     check res == 3.0
+
+  test "matching a variant type with implicit field names":
+    let c = Shape(kind: Circle, x: 2, y: 0, r: 4)
+    var res: float = 0
+    match c:
+      Circle(x, y, r):
+        res = r
+      Rectangle(w, h):
+        res = 1
+    check res == 4.0
+
+  test "matching a variant type with implicit field names using other identifiers":
+    let c = Shape(kind: Circle, x: 2, y: 0, r: 4)
+    var res: float = 0
+    match c:
+      Circle(x, y, radius):
+        res = radius
+      Rectangle(width, height):
+        res = 1
+    check res == 4.0
