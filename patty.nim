@@ -165,6 +165,9 @@ macro variant*(e: expr, body: stmt): stmt {. immediate .} =
     echo toStrLit(result)
 
 
+###########################################################
+
+
 proc isObject(tp: NimNode): bool {. compileTime .} =
   (tp.kind == nnkObjectTy) and (tp[1][0].kind != nnkRecCase)
 
@@ -181,10 +184,12 @@ proc variants(tp: NimNode): seq[NimNode] {. compileTime .} =
   for e in getType(disc)[0].children:
     result.add(e)
 
-proc resolveSymbol(id: NimNode, syms: seq[NimNode]): NimNode {. compileTime .} =
+proc resolveSymbol(id: NimNode, syms: seq[NimNode]): tuple[index: int, sym: NimNode] {. compileTime .} =
+  var count = 0
   for sym in syms:
     if $(id) == $(sym):
-      return sym
+      return (count, sym)
+    count += 1
   error("Invalid matching clause: " & $(id))
 
 proc matchSimple(n, sym, tp: NimNode): NimNode {. compileTime .} =
@@ -226,7 +231,7 @@ proc matchBranch(n, sym, tp: NimNode): NimNode {. compileTime .} =
   # This is the thing we dispatch on
   let kindId = obj[0]
   kindId.expectKind(nnkIdent)
-  let kindSym = resolveSymbol(kindId, variants(tp))
+  let (_, kindSym) = resolveSymbol(kindId, variants(tp))
   result = newNimNode(nnkOfBranch).add(kindSym, matchSimple(n, sym, tp))
 
 proc matchVariant(statements, sym, tp: NimNode): NimNode {. compileTime .} =
