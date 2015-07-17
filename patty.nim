@@ -222,40 +222,17 @@ proc findFields(tp: NimNode, index: int): seq[NimNode] {. compileTime .} =
   for c in recList.children:
     result.add(c)
 
-proc matchSimple(n, sym, tp: NimNode): NimNode {. compileTime .} =
-  n.expectKind(nnkCall)
-  n.expectMinLen(2)
-
-  let
-    obj = n[0]
-    statements = n[1]
-  statements.expectKind(nnkStmtList)
-
-  # This is the new declaration section
-  var decl = newNimNode(nnkLetSection)
-  # These are the clauses for the bound variables
-  for c in tail(obj):
-    c.expectMinLen(2)
-    # ignore bindings to _
-    if $(c[1]) != "_":
-      decl.add(newIdentDefs(c[1], newEmptyNode(), newDotExpr(sym, c[0])))
-
-  # We transform the matching branch
-  # into a declaration of bound variables
-  # followed by the body, for instance
-  #
-  # let r = :tmp.r
-  # ...
-  result = newNimNode(nnkStmtList).add(decl)
-  for c in children(statements):
+proc findFields(tp: NimNode): seq[NimNode] {. compileTime .} =
+  # ObjectTy
+  #   Empty
+  #   RecList
+  #     Sym "name"
+  #     Sym "surname"
+  #     Sym "age"
+  let recList = tp[1]
+  result = @[]
+  for c in recList.children:
     result.add(c)
-
-proc matchBranchQualified(n, sym, tp: NimNode): NimNode {. compileTime .} =
-  let
-    obj = n[0]
-    kindId = obj[0]
-    (_, kindSym) = resolveSymbol(kindId, variants(tp))
-  result = newNimNode(nnkOfBranch).add(kindSym, matchSimple(n, sym, tp))
 
 proc matchWithBindings(statements, sym: NimNode, fields, bindings: seq[NimNode]): NimNode {. compileTime .} =
   statements.expectKind(nnkStmtList)
@@ -278,6 +255,40 @@ proc matchWithBindings(statements, sym: NimNode, fields, bindings: seq[NimNode])
   for c in children(statements):
     result.add(c)
 
+proc matchObjectQualified(n, sym, tp: NimNode): NimNode {. compileTime .} =
+  n.expectKind(nnkCall)
+  n.expectMinLen(2)
+
+  let
+    obj = n[0]
+    statements = n[1]
+  var
+    fields: seq[NimNode] = @[]
+    bindings: seq[NimNode] = @[]
+
+  for c in tail(obj):
+    c.expectMinLen(2)
+    fields.add(c[0])
+    bindings.add(c[1])
+
+  return matchWithBindings(statements, sym, fields, bindings)
+
+proc matchObjectImplicit(n, sym, tp: NimNode): NimNode {. compileTime .} =
+  let
+    fields = findFields(tp)
+    statements = n.last
+  var bindings: seq[NimNode] = @[]
+  for i in 1 .. len(n) - 2:
+    bindings.add(n[i])
+  return matchWithBindings(statements, sym, fields, bindings)
+
+proc matchBranchQualified(n, sym, tp: NimNode): NimNode {. compileTime .} =
+  let
+    obj = n[0]
+    kindId = obj[0]
+    (_, kindSym) = resolveSymbol(kindId, variants(tp))
+  result = newNimNode(nnkOfBranch).add(kindSym, matchObjectQualified(n, sym, tp))
+
 proc matchBranchImplicit(n, sym, tp: NimNode): NimNode {. compileTime .} =
   let
     kindId = n[0]
@@ -288,6 +299,16 @@ proc matchBranchImplicit(n, sym, tp: NimNode): NimNode {. compileTime .} =
   for i in 1 .. len(n) - 2:
     bindings.add(n[i])
   result = newNimNode(nnkOfBranch).add(kindSym, matchWithBindings(statements, sym, fields, bindings))
+
+proc matchObject(n, sym, tp: NimNode): NimNode {. compileTime .} =
+  # We have a few cases for obj (the matching part)
+  # It could be
+  # - a qualified matching clause like Circle(r: r)
+  # - an implicit matching clause like Circle(r)
+  # - a literal (not yet)
+  # - a bound or unbound variable (not yet)
+  if n[0].kind == nnkObjConstr: matchObjectQualified(n, sym, tp)
+  else: matchObjectImplicit(n, sym, tp)
 
 proc matchBranch(n, sym, tp: NimNode): NimNode {. compileTime .} =
   # We have a few cases for obj (the matching part)
@@ -318,7 +339,7 @@ macro match*(e: typed, statements: untyped): stmt =
 
   # A fresh symbol used to hold the evaluation of e
   let sym = genSym()
-  let body = if isSimpleObject: matchSimple(statements[0], sym, exprType)
+  let body = if isSimpleObject: matchObject(statements[0], sym, exprType)
     else: matchVariant(statements, sym, exprType)
 
   # The whole thing is translated into a

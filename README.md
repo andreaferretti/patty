@@ -44,6 +44,16 @@ of Rectangle:
   echo "it is a rectangle of height ", height
 ```
 
+Matching by position is also valid, like this:
+
+```nim
+match makeRect(3, 4):
+  Circle(radius):
+    echo "it is a circle of radius ", radius
+  Rectangle(width, height):
+    echo "it is a rectangle of height ", height
+```
+
 One can also use `_` for a variable, in which case it will not be bound. That is, the following
 
 ```nim
@@ -84,6 +94,17 @@ match p:
   Person(name: n, age: a):
     echo n, "is ", a, " years old"
 ```
+
+Again, this is the same as
+
+```nim
+match p:
+  Person(n, a):
+    echo n, "is ", a, " years old"
+```
+
+Constructing variant objects
+----------------------------
 
 Patty also provides another macro to create algebraic data types. It looks like
 
@@ -187,14 +208,6 @@ match c:
 match c:
   Circle:
     echo "it is a circle!"
-```
-
-* matching by position
-
-```nim
-match c:
-  Circle(x, y, r):
-    echo "the radius is ", r
 ```
 
 * binding subpatterns

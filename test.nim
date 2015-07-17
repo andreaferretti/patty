@@ -190,3 +190,19 @@ suite "pattern matching":
       Rectangle(width, height):
         res = 1
     check res == 4.0
+
+  test "matching a simple object with implicit fields names":
+    let c = Person(name: "Andrea", surname: "Ferretti", age: 34)
+    var res: string = ""
+    match c:
+      Person(name, surname, age):
+        res = name
+    check res == "Andrea"
+
+  test "matching a simple object with implicit fields names using other identifiers":
+    let c = Person(name: "Andrea", surname: "Ferretti", age: 34)
+    var res: string = ""
+    match c:
+      Person(n, s, a):
+        res = n
+    check res == "Andrea"
