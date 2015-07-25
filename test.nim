@@ -85,6 +85,18 @@ suite "variant construction":
 
     check car1 == car2
 
+  test "handling visibility in constructors":
+    let
+      car1 = Car(brand = "Fiat", model = "Punto")
+      car2 = Car(brand = "Fiat", model = "Punto")
+      bike = Bycicle()
+      truck = Truck(length = 12, tires = 8)
+
+    check car1 == car2
+    check truck.kind == VehicleKind.Truck
+    check bike.kind == VehicleKind.Bycicle
+    check truck.tires == 8
+
 suite "pattern matching":
   type
     ShapeKind = enum

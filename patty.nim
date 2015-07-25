@@ -104,17 +104,19 @@ proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode  {. compileTim
       c.expectKind(nnkExprColonExpr)
       c.expectMinLen(2)
       constr.add(newColonExpr(c[0], c[0]))
+    let procName = if pub: postfix(n[0], "*") else: n[0]
 
     result = newProc(
-      name = n[0],
+      name = procName,
       params = params,
       body = newStmtList().add(constr)
     )
   elif n.kind == nnkIdent:
     var constr = newNimNode(nnkObjConstr).add(
       e, newColonExpr(ident("kind"), newNimNode(nnkDotExpr).add(base, n)))
+    let procName = if pub: postfix(n, "*") else: n
     result = newProc(
-      name = n,
+      name = procName,
       params = [e],
       body = newStmtList().add(constr)
     )
