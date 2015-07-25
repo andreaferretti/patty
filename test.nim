@@ -1,4 +1,4 @@
-import unittest, patty, macros
+import unittest, patty, testhelp
 
 
 suite "variant construction":
@@ -72,6 +72,11 @@ suite "variant construction":
     check c1 != c3
     check c1 != s
     check u1 == u2
+
+  test "handling visibility":
+    let car = Vehicle(kind: VehicleKind.Car, brand: "Fiat", model: "Punto")
+
+    check car.brand == "Fiat"
 
 suite "pattern matching":
   type

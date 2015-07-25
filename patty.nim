@@ -34,7 +34,7 @@ proc newEnum(name: NimNode, idents: seq[NimNode]): NimNode {. compileTime .} =
     choices.add(ident)
   result.add(choices)
 
-proc makeBranch(base: NimNode, n: NimNode): NimNode {. compileTime .} =
+proc makeBranch(base, n: NimNode, pub: bool): NimNode {. compileTime .} =
   result = newNimNode(nnkOfBranch)
   if n.kind == nnkObjConstr:
     let id = newNimNode(nnkDotExpr).add(base, n[0])
@@ -42,14 +42,17 @@ proc makeBranch(base: NimNode, n: NimNode): NimNode {. compileTime .} =
     for e in tail(n):
       e.expectKind(nnkExprColonExpr)
       e.expectMinLen(2)
-      list.add(newIdentDefs(e[0], e[1]))
+      let
+        fieldName = if pub: postfix(e[0], "*") else: e[0]
+        fieldType = e[1]
+      list.add(newIdentDefs(fieldName, fieldType))
     result.add(id, list)
   elif n.kind == nnkIdent:
     result.add(newNimNode(nnkDotExpr).add(base, n), newNimNode(nnkRecList).add(newNilLit()))
   else:
       error("Invalid ADT case: " & $(toStrLit(n)))
 
-proc defineTypes(e, body: NimNode): NimNode {. compileTime .} =
+proc defineTypes(e, body: NimNode, pub: bool = false): NimNode {. compileTime .} =
   e.expectKind(nnkIdent)
   body.expectKind(nnkStmtList)
   # The children of the body should look like object constructors
@@ -59,16 +62,21 @@ proc defineTypes(e, body: NimNode): NimNode {. compileTime .} =
   #
   # Here we first extract the external identifiers (Circle, Rectangle)
   # that will be the possible values of the kind enum.
-  let enumName = ident($(e) & enumSuffix)
-  let enumType = newEnum(enumName, enumsIn(body))
+  let
+    enumName = ident($(e) & enumSuffix)
+    enumType =
+      if pub: newEnum(postfix(enumName, "*"), enumsIn(body))
+      else: newEnum(enumName, enumsIn(body))
+    tp = if pub: postfix(e, "*") else: e
+    disc = if pub: postfix(ident("kind"), "*") else: ident("kind")
 
   # Then we put the actual type we are defining
-  var cases = newNimNode(nnkRecCase).add(newIdentDefs(ident("kind"), enumName))
+  var cases = newNimNode(nnkRecCase).add(newIdentDefs(disc, enumName))
   for child in children(body):
-    cases.add(makeBranch(enumName, child))
+    cases.add(makeBranch(enumName, child, pub))
 
   let definedType = newNimNode(nnkTypeDef).add(
-    e,
+    tp,
     newEmptyNode(),
     newNimNode(nnkObjectTy).add(
       newEmptyNode(),
@@ -81,7 +89,7 @@ proc defineTypes(e, body: NimNode): NimNode {. compileTime .} =
   result.add(enumType)
   result.add(definedType)
 
-proc defineConstructor(e, n: NimNode): NimNode  {. compileTime .} =
+proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode  {. compileTime .} =
   let base = ident($(e)) & enumSuffix
   if n.kind == nnkObjConstr:
     var params = @[e]
@@ -132,7 +140,7 @@ proc eqFor(e, n: NimNode): NimNode {. compileTime .} =
     error("Invalid ADT case: " & $(toStrLit(n)))
 
 
-proc defineEquality(tp, body: NimNode): NimNode {. compileTime .} =
+proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode {. compileTime .} =
   # template compare(content, tp: NimNode) =
   #   proc `==`(a, b: tp): bool =
   #     if a.kind == b.kind: content
@@ -161,6 +169,14 @@ macro variant*(e: expr, body: stmt): stmt {. immediate .} =
 
   for child in children(body):
     result.add(defineConstructor(e, child))
+  when defined(pattydebug):
+    echo toStrLit(result)
+
+macro variantp*(e: expr, body: stmt): stmt {. immediate .} =
+  result = newStmtList(defineTypes(e, body, true), defineEquality(e, body, true))
+
+  for child in children(body):
+    result.add(defineConstructor(e, child, true))
   when defined(pattydebug):
     echo toStrLit(result)
 
