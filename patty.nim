@@ -156,9 +156,10 @@ proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode {. compileTim
     ),
     newNimNode(nnkElse).add(newStmtList(newNimNode(nnkReturnStmt).add(ident("false"))))
   )
+  let procName = if pub: postfix(ident("=="), "*") else: ident("==")
 
   result = newProc(
-    name = ident("=="),
+    name = procName,
     params = [ident("bool"), newIdentDefs(ident("a"), tp), newIdentDefs(ident("b"), tp)],
     body = newStmtList(body)
   )

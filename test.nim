@@ -78,6 +78,13 @@ suite "variant construction":
 
     check car.brand == "Fiat"
 
+  test "handling visibility in equality":
+    let
+      car1 = Vehicle(kind: VehicleKind.Car, brand: "Fiat", model: "Punto")
+      car2 = Vehicle(kind: VehicleKind.Car, brand: "Fiat", model: "Punto")
+
+    check car1 == car2
+
 suite "pattern matching":
   type
     ShapeKind = enum
