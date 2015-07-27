@@ -155,6 +155,8 @@ proc UnitCircle(side: int): Shape =
 
 Notice that the macro also generates three convenient constructors (`Circle` ,`Rectangle` and `UnitCircle`), and in fact the enum is pure to avoid a name conflict. Also, a proper definition of equality based on the actual contents of the record is generated.
 
+**By default the generated ADT is private to the module**. If you want to generate a public ADT use the `variantp` macro, which has the same syntax as `variant` but makes the types, fields, equality definition and generated constructors public.
+
 A couple of limitations fo the `variant` macro:
 
 * field names must be unique across branches (that is, different variants cannot have two fields with the same name). This is actually a limitation of Nim.
