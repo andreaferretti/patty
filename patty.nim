@@ -311,13 +311,19 @@ proc matchBranchQualified(n, sym, tp: NimNode): NimNode {. compileTime .} =
 proc matchBranchImplicit(n, sym, tp: NimNode): NimNode {. compileTime .} =
   let
     kindId = n[0]
-    (index, kindSym) = resolveSymbol(kindId, variants(tp))
-    fields = findFields(tp, index)
     statements = n.last
-  var bindings: seq[NimNode] = @[]
-  for i in 1 .. len(n) - 2:
-    bindings.add(n[i])
-  result = newNimNode(nnkOfBranch).add(kindSym, matchWithBindings(statements, sym, fields, bindings))
+  if kindId.kind == nnkIdent and $(kindId) == "_":
+    # catch-all pattern
+    n.expectLen(2)
+    result = newNimNode(nnkElse).add(statements)
+  else:
+    let
+      (index, kindSym) = resolveSymbol(kindId, variants(tp))
+      fields = findFields(tp, index)
+    var bindings: seq[NimNode] = @[]
+    for i in 1 .. len(n) - 2:
+      bindings.add(n[i])
+    result = newNimNode(nnkOfBranch).add(kindSym, matchWithBindings(statements, sym, fields, bindings))
 
 proc matchObject(n, sym, tp: NimNode): NimNode {. compileTime .} =
   # We have a few cases for obj (the matching part)

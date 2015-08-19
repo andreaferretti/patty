@@ -230,3 +230,14 @@ suite "pattern matching":
       Person(n, s, a):
         res = n
     check res == "Andrea"
+
+  test "catch-all pattern":
+    let c = Shape(kind: Rectangle, w: 4, h: 3)
+    var res: float = 0
+    let debug = true
+    match c:
+      Circle(x: _, y: _, r: r):
+        res = r
+      _:
+        res = 13
+    check res == 13.0

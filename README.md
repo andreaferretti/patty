@@ -169,16 +169,6 @@ Things that do not work (yet)
 
 One would expect many forms of pattern matching but, at least for now, the support in Patty is very limited. Things that would be nice to support but do not work yet include:
 
-* catch-all patterns
-
-```nim
-match c:
-  Circle(r: r):
-    echo "it is a circle"
-  _:
-    echo "it is not a circle"
-```
-
 * matching a constant
 
 ```nim
