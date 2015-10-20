@@ -3,9 +3,9 @@ compiler:
   - gcc
 before_install:
   # Install nim
-  - git clone -b master git://github.com/nim-lang/Nim.git --depth 1
+  - git clone -b devel git://github.com/nim-lang/Nim.git --depth 1
   - cd Nim
-  - git clone -b master --depth 1 git://github.com/nim-lang/csources
+  - git clone -b devel --depth 1 git://github.com/nim-lang/csources
   - cd csources && sh build.sh
   - cd ..
   - bin/nim c koch
