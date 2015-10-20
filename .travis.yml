@@ -3,7 +3,6 @@ compiler:
   - gcc
 before_install:
   # Install nim
-  # - cd ~
   - git clone -b master git://github.com/nim-lang/Nim.git --depth 1
   - cd Nim
   - git clone -b master --depth 1 git://github.com/nim-lang/csources
@@ -13,8 +12,5 @@ before_install:
   - ./koch boot -d:release
   - export PATH=$PWD/bin:$PATH
   - cd ..
-  # - echo 'export PATH=$PWD/bin:$PATH' >> ~/.bashrc
-# install:
-#   - source ~/.bashrc
 script:
   - nim c --run test
