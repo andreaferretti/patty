@@ -1,6 +1,8 @@
 Patty - A pattern matching library
 ==================================
 
+[![Build Status](https://travis-ci.org/andreaferretti/patty.svg?branch=master)](https://travis-ci.org/andreaferretti/patty)
+
 Patty is a library to perform pattern matching in Nim. The patterns have to be [variant objects](http://nim-lang.org/docs/manual.html#types-object-variants), which in Nim are encoded with a field (usually called `kind`) which varies in an enum, and a different object layout based on the value of this tag. An example would be
 
 ```nim
