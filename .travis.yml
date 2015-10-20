@@ -10,8 +10,8 @@ before_install:
   - cd ..
   - bin/nim c koch
   - ./koch boot -d:release
-  - echo 'export PATH=~/Nim/bin:$PATH' >> ~/.profile
+  - echo 'export PATH=~/Nim/bin:$PATH' >> ~/.bashrc
 install:
-  - source ~/.profile
+  - source ~/.bashrc
 script:
   - nim c --run test
