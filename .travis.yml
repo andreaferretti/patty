@@ -14,4 +14,4 @@ before_install:
 # install:
 #   - source ~/.bashrc
 script:
-  - PATH=~/Nim/bin:$PATH; nim c --run test
+  - ~/Nim/bin/nim c --run test
