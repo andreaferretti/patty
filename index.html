@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Patty by andreaferretti</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Patty</h1>
+      <h2 class="project-tagline">A pattern matching library for Nim</h2>
+      <a href="https://github.com/andreaferretti/patty" class="btn">View on GitHub</a>
+      <a href="https://github.com/andreaferretti/patty/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/andreaferretti/patty/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="patty---a-pattern-matching-library" class="anchor" href="#patty---a-pattern-matching-library" aria-hidden="true"><span class="octicon octicon-link"></span></a>Patty - A pattern matching library</h1>
+
+<p><a href="https://travis-ci.org/andreaferretti/patty"><img src="https://travis-ci.org/andreaferretti/patty.svg?branch=master" alt="Build Status"></a>
+<a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble_js.png" alt="nimble"></a></p>
+
+<p>Patty is a library to perform pattern matching in Nim. The patterns have to be <a href="http://nim-lang.org/docs/manual.html#types-object-variants">variant objects</a>, which in Nim are encoded with a field (usually called <code>kind</code>) which varies in an enum, and a different object layout based on the value of this tag. An example would be</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">type</span>
+  ShapeKind = <span class="pl-k">enum</span>
+    Circle, Rectangle
+  Shape = <span class="pl-k">object</span>
+    <span class="pl-k">case</span> kind: ShapeKind
+    <span class="pl-k">of</span> Circle:
+      r: <span class="pl-k">float</span>
+    <span class="pl-k">of</span> Rectangle:
+      w, h: <span class="pl-k">float</span></pre></div>
+
+<p>If you have such an algebraic data type, you can do the following with Patty:</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">import</span> patty
+
+<span class="pl-k">proc</span> <span class="pl-en">makeRect</span>(w, h: <span class="pl-k">float</span>)<span class="pl-k">:</span> Shape <span class="pl-k">=</span> <span class="pl-c1">Shape</span>(kind: Rectangle, w: w, h: h)
+
+<span class="pl-c1">match</span> <span class="pl-c1">makeRect</span>(<span class="pl-c1">3</span>, <span class="pl-c1">4</span>)<span class="pl-k">:</span>
+  <span class="pl-c1">Circle</span>(r: radius)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"it is a circle of radius "</span>, radius
+  <span class="pl-c1">Rectangle</span>(w: width, h: height)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"it is a rectangle of height "</span>, height</pre></div>
+
+<p>This will be translated by the <code>match</code> macro into the following form</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">let</span> :tmp = <span class="pl-c1">makeRect</span>(<span class="pl-c1">3</span>, <span class="pl-c1">4</span>)
+<span class="pl-k">case</span> :tmp.kind
+<span class="pl-k">of</span> Circle:
+  <span class="pl-k">let</span> radius = :tmp.r
+  <span class="pl-c1">echo</span> <span class="pl-s">"it is a circle of radius "</span>, radius
+<span class="pl-k">of</span> Rectangle:
+  <span class="pl-k">let</span>
+    width = :tmp.w
+    height = :tmp.h
+  <span class="pl-c1">echo</span> <span class="pl-s">"it is a rectangle of height "</span>, height</pre></div>
+
+<p>Matching by position is also valid, like this:</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> <span class="pl-c1">makeRect</span>(<span class="pl-c1">3</span>, <span class="pl-c1">4</span>)<span class="pl-k">:</span>
+  <span class="pl-c1">Circle</span>(radius)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"it is a circle of radius "</span>, radius
+  <span class="pl-c1">Rectangle</span>(width, height)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"it is a rectangle of height "</span>, height</pre></div>
+
+<p>One can also use <code>_</code> for a variable, in which case it will not be bound. That is, the following</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">import</span> patty
+
+<span class="pl-k">proc</span> <span class="pl-en">makeRect</span>(w, h: <span class="pl-k">float</span>)<span class="pl-k">:</span> Shape <span class="pl-k">=</span> <span class="pl-c1">Shape</span>(kind: Rectangle, w: w, h: h)
+
+<span class="pl-c1">match</span> <span class="pl-c1">makeRect</span>(<span class="pl-c1">3</span>, <span class="pl-c1">4</span>)<span class="pl-k">:</span>
+  <span class="pl-c1">Circle</span>(r: radius)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"it is a circle of radius "</span>, radius
+  <span class="pl-c1">Rectangle</span>(w: _, h: height)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"it is a rectangle of height "</span>, height</pre></div>
+
+<p>becomes</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">let</span> :tmp = <span class="pl-c1">makeRect</span>(<span class="pl-c1">3</span>, <span class="pl-c1">4</span>)
+<span class="pl-k">case</span> :tmp.kind
+<span class="pl-k">of</span> Circle:
+  <span class="pl-k">let</span> radius = :tmp.r
+  <span class="pl-c1">echo</span> <span class="pl-s">"it is a circle of radius "</span>, radius
+<span class="pl-k">of</span> Rectangle:
+  <span class="pl-k">let</span> height = :tmp.h
+  <span class="pl-c1">echo</span> <span class="pl-s">"it is a rectangle of height "</span>, height</pre></div>
+
+<p>Notice that in the examples, the field you dispatch on is called <code>kind</code>, but any other name would do. Also, checks are exhaustive: if you miss a case, the compiler will complain.</p>
+
+<p>One can instead pattern-match on non-variant objects, which essentially amounts to deconstructing fields:</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">type</span> Person = <span class="pl-k">object</span>
+  name: <span class="pl-k">string</span>
+  age: <span class="pl-k">int</span>
+<span class="pl-k">let</span> p = <span class="pl-c1">Person</span>(name: <span class="pl-s">"John Doe"</span>, age: <span class="pl-c1">37</span>)
+<span class="pl-c1">match</span> p:
+  <span class="pl-c1">Person</span>(name: n, age: a)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> n, <span class="pl-s">"is "</span>, a, <span class="pl-s">" years old"</span></pre></div>
+
+<p>Again, this is the same as</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> p:
+  <span class="pl-c1">Person</span>(n, a)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> n, <span class="pl-s">"is "</span>, a, <span class="pl-s">" years old"</span></pre></div>
+
+<h2>
+<a id="constructing-variant-objects" class="anchor" href="#constructing-variant-objects" aria-hidden="true"><span class="octicon octicon-link"></span></a>Constructing variant objects</h2>
+
+<p>Patty also provides another macro to create algebraic data types. It looks like</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">variant</span> Shape:
+  <span class="pl-c1">Circle</span>(r: <span class="pl-k">float</span>)
+  <span class="pl-c1">Rectangle</span>(w: <span class="pl-k">float</span>, h: <span class="pl-k">float</span>)
+  UnitCircle</pre></div>
+
+<p>and expands to</p>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">type</span>
+  ShapeKind {.<span class="pl-e">pure</span>.} <span class="pl-k">=</span> <span class="pl-k">enum</span>
+    Circle, Rectangle, UnitCircle
+  Shape = <span class="pl-k">object</span>
+    <span class="pl-k">case</span> kind: ShapeKind
+    <span class="pl-k">of</span> ShapeKind.Circle:
+      r: <span class="pl-k">float</span>
+    <span class="pl-k">of</span> ShapeKind.Rectangle:
+      w: <span class="pl-k">float</span>
+      h: <span class="pl-k">float</span>
+    <span class="pl-k">of</span> ShapeKind.UnitCircle:
+      <span class="pl-c1">nil</span>
+
+<span class="pl-k">proc</span> <span class="pl-en">`==`</span>(a: Shape; b: Shape)<span class="pl-k">:</span> <span class="pl-k">bool</span> <span class="pl-k">=</span>
+  <span class="pl-k">if</span> a.kind == b.kind:
+    <span class="pl-k">case</span> a.kind
+    <span class="pl-k">of</span> ShapeKind.Circle:
+      <span class="pl-k">return</span> a.r == b.r
+    <span class="pl-k">of</span> ShapeKind.Rectangle:
+      <span class="pl-k">return</span> a.w == b.w <span class="pl-k">and</span> a.h == b.h
+    <span class="pl-k">of</span> ShapeKind.UnitCircle:
+      <span class="pl-k">return</span> <span class="pl-c1">true</span>
+  <span class="pl-k">else</span>:
+    <span class="pl-k">return</span> <span class="pl-c1">false</span>
+
+<span class="pl-k">proc</span> <span class="pl-en">Circle</span>(r: <span class="pl-k">float</span>; x: <span class="pl-k">float</span>; y: <span class="pl-k">float</span>)<span class="pl-k">:</span> Shape <span class="pl-k">=</span>
+  <span class="pl-c1">Shape</span>(kind: ShapeKind.Circle, r: r)
+
+<span class="pl-k">proc</span> <span class="pl-en">Rectangle</span>(w: <span class="pl-k">float</span>; h: <span class="pl-k">float</span>)<span class="pl-k">:</span> Shape <span class="pl-k">=</span>
+  <span class="pl-c1">Shape</span>(kind: ShapeKind.Rectangle, w: w, h: h)
+
+<span class="pl-k">proc</span> <span class="pl-en">UnitCircle</span>(side: <span class="pl-k">int</span>)<span class="pl-k">:</span> Shape <span class="pl-k">=</span>
+  <span class="pl-c1">Shape</span>(kind: ShapeKind.UnitCircle)</pre></div>
+
+<p>Notice that the macro also generates three convenient constructors (<code>Circle</code> ,<code>Rectangle</code> and <code>UnitCircle</code>), and in fact the enum is pure to avoid a name conflict. Also, a proper definition of equality based on the actual contents of the record is generated.</p>
+
+<p><strong>By default the generated ADT is private to the module</strong>. If you want to generate a public ADT use the <code>variantp</code> macro, which has the same syntax as <code>variant</code> but makes the types, fields, equality definition and generated constructors public.</p>
+
+<p>A couple of limitations fo the <code>variant</code> macro:</p>
+
+<ul>
+<li>field names must be unique across branches (that is, different variants cannot have two fields with the same name). This is actually a limitation of Nim.</li>
+<li>the shortcut that groups field names by type does not seem to work, that is, in the above example one could not write <code>Rectangle(w, h: float)</code>.</li>
+</ul>
+
+<p>In the future, Patty may also add copy constructors. Also, some work needs to be done to make it easier to use the generated contructors with <code>ref</code> types, in particular for the important case of recursive algebraic data types.</p>
+
+<h2>
+<a id="things-that-do-not-work-yet" class="anchor" href="#things-that-do-not-work-yet" aria-hidden="true"><span class="octicon octicon-link"></span></a>Things that do not work (yet)</h2>
+
+<p>One would expect many forms of pattern matching but, at least for now, the support in Patty is very limited. Things that would be nice to support but do not work yet include:</p>
+
+<ul>
+<li>matching a constant</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> c:
+  <span class="pl-s">"hello"</span><span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"the string was hello"</span></pre></div>
+
+<ul>
+<li>matching an existing variable</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">let</span> x = <span class="pl-c1">5</span>
+<span class="pl-c1">match</span> c:
+  x:
+    <span class="pl-c1">echo</span> <span class="pl-s">"c == 5"</span></pre></div>
+
+<ul>
+<li>nested pattern matching</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> c:
+  <span class="pl-c1">Circle</span>(<span class="pl-c1">Point</span>(x: x, y: y), r: r)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"the abscissa of the center is "</span>, x</pre></div>
+
+<ul>
+<li>matching without binding</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> c:
+  Circle:
+    <span class="pl-c1">echo</span> <span class="pl-s">"it is a circle!"</span></pre></div>
+
+<ul>
+<li>binding subpatterns</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> <span class="pl-c1">getMeACircle</span>()<span class="pl-k">:</span>
+  c@<span class="pl-c1">Circle</span>(x, y, r)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"there you have "</span>, c</pre></div>
+
+<ul>
+<li>pattern matching as an expression</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">let</span> coord = <span class="pl-c1">match</span> c:
+  <span class="pl-c1">Circle</span>(x: x, y: y, r: r)<span class="pl-k">:</span>
+    x
+  <span class="pl-c1">Rectangle</span>(w: w, h: h)<span class="pl-k">:</span>
+    h</pre></div>
+
+<ul>
+<li>unification</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> r:
+  <span class="pl-c1">Rectangle</span>(w: x, h: x)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"it is a square"</span></pre></div>
+
+<ul>
+<li>guards</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> c:
+  <span class="pl-c1">Circle</span>(x: x, y: y, r: r) <span class="pl-k">if</span> r &lt; <span class="pl-c1">0</span>:
+    <span class="pl-c1">echo</span> <span class="pl-s">"the circle has negative length"</span></pre></div>
+
+<ul>
+<li>variable-length pattern matching, such as with arrays</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> c:
+  [a, b, c]:
+    <span class="pl-c1">echo</span> <span class="pl-s">"the length is 3 and the first elements is "</span>, a</pre></div>
+
+<ul>
+<li>custom pattern matchers, such as in regexes</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-k">let</span> Email = <span class="pl-s">r"(\w+)@(\w+).(\w+)"</span>
+<span class="pl-c1">match</span> c:
+  <span class="pl-c1">Email</span>(name, domain, tld)<span class="pl-k">:</span>
+    <span class="pl-c1">echo</span> <span class="pl-s">"hello "</span>, name</pre></div>
+
+<ul>
+<li>combining patterns with <code>or</code>
+</li>
+</ul>
+
+<div class="highlight highlight-source-nim"><pre><span class="pl-c1">match</span> c:
+  Circle <span class="pl-k">or</span> Rectangle:
+    <span class="pl-c1">echo</span> <span class="pl-s">"it is a shape"</span></pre></div>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/andreaferretti/patty">Patty</a> is maintained by <a href="https://github.com/andreaferretti">andreaferretti</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
