@@ -188,13 +188,13 @@ macro variantp*(e: expr, body: stmt): stmt {. immediate .} =
 
 
 proc isObject(tp: NimNode): bool {. compileTime .} =
-  (tp.kind == nnkObjectTy) and (tp[1][0].kind != nnkRecCase)
+  (tp.kind == nnkObjectTy) and (tp[2][0].kind != nnkRecCase)
 
 proc isVariant(tp: NimNode): bool {. compileTime .} =
-  (tp.kind == nnkObjectTy) and (tp[1][0].kind == nnkRecCase)
+  (tp.kind == nnkObjectTy) and (tp[2][0].kind == nnkRecCase)
 
 proc discriminator(tp: NimNode): NimNode {. compileTime .} =
-  if (tp.kind == nnkObjectTy) and (tp[1][0].kind == nnkRecCase): tp[1][0][0]
+  if (tp.kind == nnkObjectTy) and (tp[2][0].kind == nnkRecCase): tp[2][0][0]
   else: nil
 
 proc variants(tp: NimNode): seq[NimNode] {. compileTime .} =
@@ -215,6 +215,7 @@ proc resolveSymbol(id: NimNode, syms: seq[NimNode]): tuple[index: int, sym: NimN
 proc findFields(tp: NimNode, index: int): seq[NimNode] {. compileTime .} =
   # ObjectTy
   #   Empty
+  #   Empty
   #   RecList
   #     RecCase
   #       Sym "kind"
@@ -234,7 +235,7 @@ proc findFields(tp: NimNode, index: int): seq[NimNode] {. compileTime .} =
   #         RecList
   #           Sym "side"
   let
-    recCase = tp[1][0]
+    recCase = tp[2][0]
     branch = recCase[index + 1]
     recList = branch[1]
   result = @[]
@@ -244,11 +245,12 @@ proc findFields(tp: NimNode, index: int): seq[NimNode] {. compileTime .} =
 proc findFields(tp: NimNode): seq[NimNode] {. compileTime .} =
   # ObjectTy
   #   Empty
+  #   Empty
   #   RecList
   #     Sym "name"
   #     Sym "surname"
   #     Sym "age"
-  let recList = tp[1]
+  let recList = tp[2]
   result = @[]
   for c in recList.children:
     result.add(c)

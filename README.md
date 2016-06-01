@@ -167,6 +167,12 @@ A couple of limitations fo the `variant` macro:
 
 In the future, Patty may also add copy constructors. Also, some work needs to be done to make it easier to use the generated contructors with `ref` types, in particular for the important case of recursive algebraic data types.
 
+Versions
+--------
+
+Patty 0.1.8 works for latest Nim (devel). For older versions of Nim (up to 0.13.0),
+use Patty 0.1.7.
+
 Things that do not work (yet)
 -----------------------------
 
