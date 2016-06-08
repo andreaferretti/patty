@@ -41,6 +41,18 @@ suite "variant construction":
     let c = UnitCircle()
     check c.kind == ShapeKind.UnitCircle
 
+  test "variant types with documentation comments":
+    variant Shape:
+      ## This is a shape
+      Circle(r: float, x: float, y: float)
+      Rectangle(w: float, h: float)
+      Square(side: int)
+      ## This is a constant object
+      UnitCircle
+
+    let c = UnitCircle()
+    check c.kind == ShapeKind.UnitCircle
+
   test "recursive types":
     variant IntList:
       Nil

@@ -21,6 +21,8 @@ proc enumsIn(n: NimNode): seq[NimNode] {. compileTime .} =
       result.add(id)
     elif c.kind == nnkIdent:
       result.add(c)
+    elif c.kind == nnkCommentStmt:
+      discard
     else:
       error("Invalid ADT case: " & $(toStrLit(c)))
 
@@ -49,6 +51,8 @@ proc makeBranch(base, n: NimNode, pub: bool): NimNode {. compileTime .} =
     result.add(id, list)
   elif n.kind == nnkIdent:
     result.add(newNimNode(nnkDotExpr).add(base, n), newNimNode(nnkRecList).add(newNilLit()))
+  elif n.kind == nnkCommentStmt:
+    discard
   else:
       error("Invalid ADT case: " & $(toStrLit(n)))
 
@@ -73,7 +77,8 @@ proc defineTypes(e, body: NimNode, pub: bool = false): NimNode {. compileTime .}
   # Then we put the actual type we are defining
   var cases = newNimNode(nnkRecCase).add(newIdentDefs(disc, enumName))
   for child in children(body):
-    cases.add(makeBranch(enumName, child, pub))
+    if child.kind != nnkCommentStmt:
+      cases.add(makeBranch(enumName, child, pub))
 
   let definedType = newNimNode(nnkTypeDef).add(
     tp,
@@ -149,7 +154,8 @@ proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode {. compileTim
   #     else: false
   var condition = newNimNode(nnkCaseStmt).add(newDotExpr(ident("a"), ident("kind")))
   for child in children(body):
-    condition.add(eqFor(tp, child))
+    if child.kind != nnkCommentStmt:
+      condition.add(eqFor(tp, child))
 
   var body = newNimNode(nnkIfExpr).add(
     newNimNode(nnkElifBranch).add(
@@ -171,7 +177,8 @@ macro variant*(e: expr, body: stmt): stmt {. immediate .} =
   result = newStmtList(defineTypes(e, body), defineEquality(e, body))
 
   for child in children(body):
-    result.add(defineConstructor(e, child))
+    if child.kind != nnkCommentStmt:
+      result.add(defineConstructor(e, child))
   when defined(pattydebug):
     echo toStrLit(result)
 
@@ -179,7 +186,8 @@ macro variantp*(e: expr, body: stmt): stmt {. immediate .} =
   result = newStmtList(defineTypes(e, body, true), defineEquality(e, body, true))
 
   for child in children(body):
-    result.add(defineConstructor(e, child, true))
+    if child.kind != nnkCommentStmt:
+      result.add(defineConstructor(e, child, true))
   when defined(pattydebug):
     echo toStrLit(result)
 
