@@ -173,7 +173,7 @@ proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode {. compileTim
   )
   # result = getAst(compare(condition, tp))
 
-macro variant*(e: expr, body: stmt): stmt {. immediate .} =
+macro variant*(e: typed, body: untyped): untyped {. immediate .} =
   result = newStmtList(defineTypes(e, body), defineEquality(e, body))
 
   for child in children(body):
@@ -182,7 +182,7 @@ macro variant*(e: expr, body: stmt): stmt {. immediate .} =
   when defined(pattydebug):
     echo toStrLit(result)
 
-macro variantp*(e: expr, body: stmt): stmt {. immediate .} =
+macro variantp*(e: typed, body: untyped): untyped {. immediate .} =
   result = newStmtList(defineTypes(e, body, true), defineEquality(e, body, true))
 
   for child in children(body):
@@ -365,7 +365,7 @@ proc matchVariant(statements, sym, tp: NimNode): NimNode {. compileTime .} =
   for child in children(statements):
     result.add(matchBranch(child, sym, tp))
 
-macro match*(e: typed, statements: untyped): stmt =
+macro match*(e: typed, statements: untyped): untyped =
   statements.expectKind(nnkStmtList)
   let
     exprType = getType(e)
