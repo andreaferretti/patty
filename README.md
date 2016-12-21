@@ -219,7 +219,7 @@ match getMeACircle():
     echo "there you have ", c
 ```
 
-* pattern matching as an expression
+* pattern matching as an expression should be simply
 
 ```nim
 let coord = match c:
@@ -227,6 +227,18 @@ let coord = match c:
     x
   Rectangle(w: w, h: h):
     h
+```
+
+Right now it works (with latest nim devel) like this:
+
+```nim
+let coord = (block:
+  match c:
+    Circle(x: x, y: y, r: r):
+      x
+    Rectangle(w: w, h: h):
+      h
+)
 ```
 
 * unification

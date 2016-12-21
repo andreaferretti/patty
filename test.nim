@@ -227,6 +227,17 @@ suite "pattern matching":
         res = 1
     check res == 4.0
 
+  test "matching as an expression":
+    let c = Shape(kind: Circle, x: 2, y: 0, r: 4)
+    let res = (block:
+      match c:
+        Circle(x, y, radius):
+          radius
+        Rectangle(width, height):
+          1.0
+    )
+    check res == 4.0
+
   test "matching a simple object with implicit fields names":
     let c = Person(name: "Andrea", surname: "Ferretti", age: 34)
     var res: string = ""

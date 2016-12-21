@@ -1,6 +1,6 @@
 mode = ScriptMode.Verbose
 
-version       = "0.1.9"
+version       = "0.1.10"
 author        = "Andrea Ferretti"
 description   = "Algebraic data types and pattern matching"
 license       = "Apache2"
@@ -18,3 +18,6 @@ task tests, "run tests":
   --path: "."
   --run
   setCommand "c", "test"
+
+task test, "run tests":
+  setCommand "tests"
