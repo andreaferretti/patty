@@ -264,3 +264,38 @@ suite "pattern matching":
       _:
         res = 13
     check res == 13.0
+
+  test "matching on a generic type":
+    type
+      ListKind = enum Nil, Cons
+      List[A] = object
+        case disc: ListKind
+        of Nil:
+          discard
+        of Cons:
+          head: A
+          tail: ref List[A]
+
+    proc `<>`[A](x: A, xs: List[A]): List[A] =
+      var xsref: ref List[A]
+      new(xsref)
+      xsref[] = xs
+      List[A](disc: Cons, head: x, tail: xsref)
+
+    proc listHelper[A](xs: seq[A]): List[A] =
+      if xs.len == 0:
+        List[A](disc: Nil)
+      else:
+        xs[0] <> listHelper(xs[1 .. xs.high])
+
+    proc list[A](xs: varargs[A]): List[A] = listHelper(@xs)
+
+    let x = list(1, 2, 3)
+    var res = 0
+    match x:
+      Cons(head, tail):
+        res = head
+      Nil:
+        res = 5
+
+    check(res == 1)
