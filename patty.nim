@@ -12,6 +12,10 @@ proc `&`(n: NimNode, s: string): NimNode {. compileTime .} =
   n.expectKind(nnkIdent)
   result = ident($(n) & s)
 
+proc expectKinds(n: NimNode, kinds: varargs[NimNodeKind]) =
+  if not @kinds.contains(n.kind):
+    error("Expected a node of kind among " & $(@kinds) & ", got " & $n.kind, n)
+
 proc enumsIn(n: NimNode): seq[NimNode] {. compileTime .} =
   result = @[]
   for c in children(n):
@@ -212,7 +216,7 @@ proc variants(tp: NimNode): seq[NimNode] {. compileTime .} =
     result.add(e)
 
 proc resolveSymbol(id: NimNode, syms: seq[NimNode]): tuple[index: int, sym: NimNode] {. compileTime .} =
-  id.expectKind(nnkIdent)
+  id.expectKinds(nnkIdent, nnkSym)
   var count = 0
   for sym in syms:
     if $(id) == $(sym):

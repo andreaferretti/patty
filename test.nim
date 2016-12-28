@@ -299,3 +299,16 @@ suite "pattern matching":
         res = 5
 
     check(res == 1)
+
+  test "matching inside generic context":
+    variant Foo:
+      mkA
+
+    proc bar[T](t: T): int =
+      let m = mkA()
+      result = 0
+      match m:
+        mkA:
+          result = 1
+
+    check(bar(1) == 1)
