@@ -13,4 +13,4 @@ before_install:
   - export PATH=$PWD/bin:$PATH
   - cd ..
 script:
-  - nim c --run test
+  - nim c --run test.nim
