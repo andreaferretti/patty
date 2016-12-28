@@ -17,7 +17,7 @@ task tests, "run tests":
   --debuginfo
   --path: "."
   --run
-  setCommand "c", "test"
+  setCommand "c", "test.nim"
 
 task test, "run tests":
   setCommand "tests"
