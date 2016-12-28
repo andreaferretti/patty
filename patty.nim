@@ -61,7 +61,7 @@ proc makeBranch(base, n: NimNode, pub: bool): NimNode =
       error("Invalid ADT case: " & $(toStrLit(n)))
 
 proc makeGenerics(e: NimNode): NimNode =
-  e.expectKinds(nnkIdent, nnkBracket)
+  e.expectKinds(nnkIdent, nnkBracketExpr)
   if e.kind == nnkIdent: newEmptyNode()
   else: newNimNode(nnkGenericParams).add(
     newNimNode(nnkIdentDefs).add(
@@ -71,7 +71,7 @@ proc makeGenerics(e: NimNode): NimNode =
     ))
 
 proc defineTypes(e, body: NimNode, pub: bool = false): NimNode =
-  e.expectKinds(nnkIdent, nnkBracket)
+  e.expectKinds(nnkIdent, nnkBracketExpr)
   let typeName =
     if e.kind == nnkIdent: e # non generic case
     else: e[0]               # generic case
@@ -113,7 +113,7 @@ proc defineTypes(e, body: NimNode, pub: bool = false): NimNode =
   result.add(definedType)
 
 proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode =
-  e.expectKinds(nnkIdent, nnkBracket)
+  e.expectKinds(nnkIdent, nnkBracketExpr)
   let typeName =
     if e.kind == nnkIdent: e # non generic case
     else: e[0]               # generic case
@@ -155,7 +155,7 @@ proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode =
       error("Invalid ADT case: " & $(toStrLit(n)))
 
 proc eqFor(e, n: NimNode): NimNode =
-  e.expectKinds(nnkIdent, nnkBracket)
+  e.expectKinds(nnkIdent, nnkBracketExpr)
   let typeName =
     if e.kind == nnkIdent: e # non generic case
     else: e[0]               # generic case
