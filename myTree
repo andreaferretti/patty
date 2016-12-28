@@ -1,0 +1,189 @@
+StmtList
+  TypeSection
+    TypeDef
+      PragmaExpr
+        Ident !"ListKind"
+        Pragma
+          Ident !"pure"
+      Empty
+      EnumTy
+        Empty
+        Ident !"Nil"
+        Ident !"Cons"
+    TypeDef
+      Ident !"List"
+      GenericParams
+        IdentDefs
+          Ident !"A"
+          Empty
+          Empty
+      ObjectTy
+        Empty
+        Empty
+        RecList
+          RecCase
+            IdentDefs
+              Ident !"kind"
+              Ident !"ListKind"
+              Empty
+            OfBranch
+              DotExpr
+                Ident !"ListKind"
+                Ident !"Nil"
+              RecList
+                NilLit nil
+            OfBranch
+              DotExpr
+                Ident !"ListKind"
+                Ident !"Cons"
+              RecList
+                IdentDefs
+                  Ident !"head"
+                  Ident !"A"
+                  Empty
+                IdentDefs
+                  Ident !"tail"
+                  RefTy
+                    BracketExpr
+                      Ident !"List"
+                      Ident !"A"
+                  Empty
+  ProcDef
+    Ident !"=="
+    Empty
+    GenericParams
+      IdentDefs
+        Ident !"A"
+        Empty
+        Empty
+    FormalParams
+      Ident !"bool"
+      IdentDefs
+        Ident !"a"
+        BracketExpr
+          Ident !"List"
+          Ident !"A"
+        Empty
+      IdentDefs
+        Ident !"b"
+        BracketExpr
+          Ident !"List"
+          Ident !"A"
+        Empty
+    Empty
+    Empty
+    StmtList
+      IfExpr
+        ElifBranch
+          Infix
+            Ident !"=="
+            DotExpr
+              Ident !"a"
+              Ident !"kind"
+            DotExpr
+              Ident !"b"
+              Ident !"kind"
+          CaseStmt
+            DotExpr
+              Ident !"a"
+              Ident !"kind"
+            OfBranch
+              DotExpr
+                Ident !"ListKind"
+                Ident !"Nil"
+              StmtList
+                ReturnStmt
+                  Ident !"true"
+            OfBranch
+              DotExpr
+                Ident !"ListKind"
+                Ident !"Cons"
+              StmtList
+                ReturnStmt
+                  Infix
+                    Ident !"and"
+                    Infix
+                      Ident !"=="
+                      DotExpr
+                        Ident !"a"
+                        Ident !"head"
+                      DotExpr
+                        Ident !"b"
+                        Ident !"head"
+                    Infix
+                      Ident !"=="
+                      DotExpr
+                        Ident !"a"
+                        Ident !"tail"
+                      DotExpr
+                        Ident !"b"
+                        Ident !"tail"
+        Else
+          StmtList
+            ReturnStmt
+              Ident !"false"
+  ProcDef
+    Ident !"Nil"
+    Empty
+    GenericParams
+      IdentDefs
+        Ident !"A"
+        Empty
+        Empty
+    FormalParams
+      BracketExpr
+        Ident !"List"
+        Ident !"A"
+    Empty
+    Empty
+    StmtList
+      ObjConstr
+        BracketExpr
+          Ident !"List"
+          Ident !"A"
+        ExprColonExpr
+          Ident !"kind"
+          DotExpr
+            Ident !"ListKind"
+            Ident !"Nil"
+  ProcDef
+    Ident !"Cons"
+    Empty
+    GenericParams
+      IdentDefs
+        Ident !"A"
+        Empty
+        Empty
+    FormalParams
+      BracketExpr
+        Ident !"List"
+        Ident !"A"
+      IdentDefs
+        Ident !"head"
+        Ident !"A"
+        Empty
+      IdentDefs
+        Ident !"tail"
+        RefTy
+          BracketExpr
+            Ident !"List"
+            Ident !"A"
+        Empty
+    Empty
+    Empty
+    StmtList
+      ObjConstr
+        BracketExpr
+          Ident !"List"
+          Ident !"A"
+        ExprColonExpr
+          Ident !"kind"
+          DotExpr
+            Ident !"ListKind"
+            Ident !"Cons"
+        ExprColonExpr
+          Ident !"head"
+          Ident !"head"
+        ExprColonExpr
+          Ident !"tail"
+          Ident !"tail"
