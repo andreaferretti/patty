@@ -8,7 +8,7 @@ iterator tail(a: NimNode): NimNode =
     if not first: yield x
     first = false
 
-proc `&`(n: NimNode, s: string): NimNode {. compileTime .} =
+proc `&`(n: NimNode, s: string): NimNode =
   n.expectKind(nnkIdent)
   result = ident($(n) & s)
 
@@ -16,7 +16,7 @@ proc expectKinds(n: NimNode, kinds: varargs[NimNodeKind]) =
   if not @kinds.contains(n.kind):
     error("Expected a node of kind among " & $(@kinds) & ", got " & $n.kind, n)
 
-proc enumsIn(n: NimNode): seq[NimNode] {. compileTime .} =
+proc enumsIn(n: NimNode): seq[NimNode] =
   result = @[]
   for c in children(n):
     if c.kind == nnkObjConstr:
@@ -30,7 +30,7 @@ proc enumsIn(n: NimNode): seq[NimNode] {. compileTime .} =
     else:
       error("Invalid ADT case: " & $(toStrLit(c)))
 
-proc newEnum(name: NimNode, idents: seq[NimNode]): NimNode {. compileTime .} =
+proc newEnum(name: NimNode, idents: seq[NimNode]): NimNode =
   result = newNimNode(nnkTypeDef).add(
     newNimNode(nnkPragmaExpr).add(name).add(
       newNimNode(nnkPragma).add(ident("pure"))),
@@ -40,7 +40,7 @@ proc newEnum(name: NimNode, idents: seq[NimNode]): NimNode {. compileTime .} =
     choices.add(ident)
   result.add(choices)
 
-proc makeBranch(base, n: NimNode, pub: bool): NimNode {. compileTime .} =
+proc makeBranch(base, n: NimNode, pub: bool): NimNode =
   result = newNimNode(nnkOfBranch)
   if n.kind == nnkObjConstr:
     let id = newNimNode(nnkDotExpr).add(base, n[0])
@@ -69,7 +69,7 @@ proc makeGenerics(e: NimNode): NimNode =
       newEmptyNode()
     ))
 
-proc defineTypes(e, body: NimNode, pub: bool = false): NimNode {. compileTime .} =
+proc defineTypes(e, body: NimNode, pub: bool = false): NimNode =
   let typeName =
     if e.kind == nnkIdent: e # non generic case
     else: e[0]               # generic case
@@ -110,8 +110,7 @@ proc defineTypes(e, body: NimNode, pub: bool = false): NimNode {. compileTime .}
   result.add(enumType)
   result.add(definedType)
 
-
-proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode  {. compileTime .} =
+proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode =
   let typeName =
     if e.kind == nnkIdent: e # non generic case
     else: e[0]               # generic case
@@ -152,7 +151,7 @@ proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode  {. compileTim
   else:
       error("Invalid ADT case: " & $(toStrLit(n)))
 
-proc eqFor(e, n: NimNode): NimNode {. compileTime .} =
+proc eqFor(e, n: NimNode): NimNode =
   let typeName =
     if e.kind == nnkIdent: e # non generic case
     else: e[0]               # generic case
@@ -175,7 +174,7 @@ proc eqFor(e, n: NimNode): NimNode {. compileTime .} =
     error("Invalid ADT case: " & $(toStrLit(n)))
 
 
-proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode {. compileTime .} =
+proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode =
   # template compare(content, tp: NimNode) =
   #   proc `==`(a, b: tp): bool =
   #     if a.kind == b.kind: content
@@ -224,23 +223,23 @@ macro variantp*(e: typed, body: untyped): untyped {. immediate .} =
 ###########################################################
 
 
-proc isObject(tp: NimNode): bool {. compileTime .} =
+proc isObject(tp: NimNode): bool =
   (tp.kind == nnkObjectTy) and (tp[2][0].kind != nnkRecCase)
 
-proc isVariant(tp: NimNode): bool {. compileTime .} =
+proc isVariant(tp: NimNode): bool =
   (tp.kind == nnkObjectTy) and (tp[2][0].kind == nnkRecCase)
 
-proc discriminator(tp: NimNode): NimNode {. compileTime .} =
+proc discriminator(tp: NimNode): NimNode =
   if (tp.kind == nnkObjectTy) and (tp[2][0].kind == nnkRecCase): tp[2][0][0]
   else: nil
 
-proc variants(tp: NimNode): seq[NimNode] {. compileTime .} =
+proc variants(tp: NimNode): seq[NimNode] =
   let disc = discriminator(tp)
   result = @[]
   for e in getType(disc)[0].children:
     result.add(e)
 
-proc resolveSymbol(id: NimNode, syms: seq[NimNode]): tuple[index: int, sym: NimNode] {. compileTime .} =
+proc resolveSymbol(id: NimNode, syms: seq[NimNode]): tuple[index: int, sym: NimNode] =
   id.expectKinds(nnkIdent, nnkSym)
   var count = 0
   for sym in syms:
@@ -249,7 +248,7 @@ proc resolveSymbol(id: NimNode, syms: seq[NimNode]): tuple[index: int, sym: NimN
     count += 1
   error("Invalid matching clause: " & $(id))
 
-proc findFields(tp: NimNode, index: int): seq[NimNode] {. compileTime .} =
+proc findFields(tp: NimNode, index: int): seq[NimNode] =
   # ObjectTy
   #   Empty
   #   Empty
@@ -279,7 +278,7 @@ proc findFields(tp: NimNode, index: int): seq[NimNode] {. compileTime .} =
   for c in recList.children:
     result.add(c)
 
-proc findFields(tp: NimNode): seq[NimNode] {. compileTime .} =
+proc findFields(tp: NimNode): seq[NimNode] =
   # ObjectTy
   #   Empty
   #   Empty
@@ -292,7 +291,7 @@ proc findFields(tp: NimNode): seq[NimNode] {. compileTime .} =
   for c in recList.children:
     result.add(c)
 
-proc matchWithBindings(statements, sym: NimNode, fields, bindings: seq[NimNode]): NimNode {. compileTime .} =
+proc matchWithBindings(statements, sym: NimNode, fields, bindings: seq[NimNode]): NimNode =
   statements.expectKind(nnkStmtList)
 
   # This is the new declaration section
@@ -313,7 +312,7 @@ proc matchWithBindings(statements, sym: NimNode, fields, bindings: seq[NimNode])
   for c in children(statements):
     result.add(c)
 
-proc matchObjectQualified(n, sym, tp: NimNode): NimNode {. compileTime .} =
+proc matchObjectQualified(n, sym, tp: NimNode): NimNode =
   n.expectKind(nnkCall)
   n.expectMinLen(2)
 
@@ -331,7 +330,7 @@ proc matchObjectQualified(n, sym, tp: NimNode): NimNode {. compileTime .} =
 
   return matchWithBindings(statements, sym, fields, bindings)
 
-proc matchObjectImplicit(n, sym, tp: NimNode): NimNode {. compileTime .} =
+proc matchObjectImplicit(n, sym, tp: NimNode): NimNode =
   let
     fields = findFields(tp)
     statements = n.last
@@ -340,14 +339,14 @@ proc matchObjectImplicit(n, sym, tp: NimNode): NimNode {. compileTime .} =
     bindings.add(n[i])
   return matchWithBindings(statements, sym, fields, bindings)
 
-proc matchBranchQualified(n, sym, tp: NimNode): NimNode {. compileTime .} =
+proc matchBranchQualified(n, sym, tp: NimNode): NimNode =
   let
     obj = n[0]
     kindId = obj[0]
     (_, kindSym) = resolveSymbol(kindId, variants(tp))
   result = newNimNode(nnkOfBranch).add(kindSym, matchObjectQualified(n, sym, tp))
 
-proc matchBranchImplicit(n, sym, tp: NimNode): NimNode {. compileTime .} =
+proc matchBranchImplicit(n, sym, tp: NimNode): NimNode =
   let
     kindId = n[0]
     statements = n.last
@@ -364,7 +363,7 @@ proc matchBranchImplicit(n, sym, tp: NimNode): NimNode {. compileTime .} =
       bindings.add(n[i])
     result = newNimNode(nnkOfBranch).add(kindSym, matchWithBindings(statements, sym, fields, bindings))
 
-proc matchObject(n, sym, tp: NimNode): NimNode {. compileTime .} =
+proc matchObject(n, sym, tp: NimNode): NimNode =
   # We have a few cases for obj (the matching part)
   # It could be
   # - a qualified matching clause like Circle(r: r)
@@ -374,7 +373,7 @@ proc matchObject(n, sym, tp: NimNode): NimNode {. compileTime .} =
   if n[0].kind == nnkObjConstr: matchObjectQualified(n, sym, tp)
   else: matchObjectImplicit(n, sym, tp)
 
-proc matchBranch(n, sym, tp: NimNode): NimNode {. compileTime .} =
+proc matchBranch(n, sym, tp: NimNode): NimNode =
   # We have a few cases for obj (the matching part)
   # It could be
   # - a qualified matching clause like Circle(r: r)
@@ -384,7 +383,7 @@ proc matchBranch(n, sym, tp: NimNode): NimNode {. compileTime .} =
   if n[0].kind == nnkObjConstr: matchBranchQualified(n, sym, tp)
   else: matchBranchImplicit(n, sym, tp)
 
-proc matchVariant(statements, sym, tp: NimNode): NimNode {. compileTime .} =
+proc matchVariant(statements, sym, tp: NimNode): NimNode =
   # The node for the dispatch statement
   #
   # case :tmp.kind of:
