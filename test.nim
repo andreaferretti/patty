@@ -66,18 +66,38 @@ suite "variant construction":
     check d.head == 3
     check d.tail.head == 2
 
-  # test "generic types":
-  #   variant List[A]:
-  #     Nil
-  #     Cons(head: A, tail: ref List[A])
-  #
-  #   proc inew[A](a: A): ref A =
-  #     new(result)
-  #     result[] = a
-  #
-  #   var d = Cons(3, inew(Cons(2, inew(Cons(1, inew(Nil()))))))
-  #   check d.head == 3
-  #   check d.tail.head == 2
+  test "generic types":
+    # There is a conflict with later types due to Nim bug:
+    # https://github.com/nim-lang/Nim/issues/5170
+    variant List2[A]:
+      Nil
+      Cons(head: A, tail: ref List2[A])
+
+    proc inew[A](a: A): ref A =
+      new(result)
+      result[] = a
+
+    var d = Cons(3, inew(Cons(2, inew(Cons(1, inew(Nil[int]()))))))
+    check d.head == 3
+    check d.tail.head == 2
+
+    # Check that equality behaves as expected
+    let nilInt = inew(Nil[int]())
+    let nilString = inew(Nil[string]())
+    check: Cons(123, nilInt) == Cons(123, nilInt)
+    check: Cons(321, nilInt) != Cons(123, nilInt)
+    check: Cons("foo", nilString) == Cons("foo", nilString)
+
+  test "generic types with multiple parameters":
+    variant Either[A, B]:
+      Left(a: A)
+      Right(b: B)
+
+    match Left[int, string](123):
+      Left(a):
+        check: a == 123
+      Right(b):
+        check: false
 
   test "generated equality":
     variant Shape:
