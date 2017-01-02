@@ -185,6 +185,38 @@ In the future, Patty may also add copy constructors. Also, some work needs to
 be done to make it easier to use the generated contructors with `ref` types,
 in particular for the important case of recursive algebraic data types.
 
+Example
+-------
+
+The following example uses the `variant` macro to define a linked list type,
+and then uses pattern matching to define the sum of a list of integers:
+
+```nim
+import patty
+
+proc `~`[A](a: A): ref A =
+  new(result)
+  result[] = a
+
+variant List[A]:
+  Nil
+  Cons(x: A, xs: ref List[A])
+
+proc listHelper[A](xs: seq[A]): List[A] =
+  if xs.len == 0: Nil[A]()
+  else: Cons(xs[0], ~listHelper(xs[1 .. xs.high]))
+
+proc list[A](xs: varargs[A]): List[A] = listHelper(@xs)
+
+proc sum(xs: List[int]): int = (block:
+  match xs:
+    Nil: 0
+    Cons(y, ys): y + sum(ys[])
+)
+
+echo sum(list(1, 2, 3, 4, 5))
+```
+
 Versions
 --------
 
