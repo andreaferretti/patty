@@ -1,0 +1,8 @@
+title: Patty
+description: A pattern matching library for Nim
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-cayman
+
+gems:
+  - jekyll-mentions
