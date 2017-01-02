@@ -305,16 +305,11 @@ suite "pattern matching":
          tail: ref List[A]
 
    proc `<>`[A](x: A, xs: List[A]): List[A] =
-     var xsref: ref List[A]
-     new(xsref)
-     xsref[] = xs
-     List[A](disc: Cons, head: x, tail: xsref)
+     List[A](disc: Cons, head: x, tail: ~xs)
 
    proc listHelper[A](xs: seq[A]): List[A] =
-     if xs.len == 0:
-       List[A](disc: Nil)
-     else:
-       xs[0] <> listHelper(xs[1 .. xs.high])
+     if xs.len == 0: List[A](disc: Nil)
+     else: xs[0] <> listHelper(xs[1 .. xs.high])
 
    proc list[A](xs: varargs[A]): List[A] = listHelper(@xs)
 
