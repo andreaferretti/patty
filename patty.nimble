@@ -1,10 +1,10 @@
 mode = ScriptMode.Verbose
 
-version       = "0.1.10"
+version       = "0.2.0"
 author        = "Andrea Ferretti"
 description   = "Algebraic data types and pattern matching"
 license       = "Apache2"
-skipFiles     = @["test", "test.nim", "testhelp.nim"]
+skipFiles     = @["test", "test.nim", "testhelp.nim", ".travis.yml"]
 
 requires "nim >= 0.14.0"
 

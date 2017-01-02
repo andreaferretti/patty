@@ -4,7 +4,11 @@ Patty - A pattern matching library
 [![Build Status](https://travis-ci.org/andreaferretti/patty.svg?branch=master)](https://travis-ci.org/andreaferretti/patty)
 [![nimble](https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble_js.png)](https://github.com/yglukhov/nimble-tag)
 
-Patty is a library to perform pattern matching in Nim. The patterns have to be [variant objects](http://nim-lang.org/docs/manual.html#types-object-variants), which in Nim are encoded with a field (usually called `kind`) which varies in an enum, and a different object layout based on the value of this tag. An example would be
+Patty is a library to perform pattern matching in Nim. The patterns have to be
+[variant objects](http://nim-lang.org/docs/manual.html#types-object-variants),
+which in Nim are encoded with a field (usually called `kind`) which varies in
+an enum, and a different object layout based on the value of this tag.
+An example would be
 
 ```nim
 type
@@ -57,7 +61,8 @@ match makeRect(3, 4):
     echo "it is a rectangle of height ", height
 ```
 
-One can also use `_` for a variable, in which case it will not be bound. That is, the following
+One can also use `_` for a variable, in which case it will not be bound.
+That is, the following
 
 ```nim
 import patty
@@ -84,9 +89,12 @@ of Rectangle:
   echo "it is a rectangle of height ", height
 ```
 
-Notice that in the examples, the field you dispatch on is called `kind`, but any other name would do. Also, checks are exhaustive: if you miss a case, the compiler will complain.
+Notice that in the examples, the field you dispatch on is called `kind`, but
+any other name would do. Also, checks are exhaustive: if you miss a case, the
+compiler will complain.
 
-One can instead pattern-match on non-variant objects, which essentially amounts to deconstructing fields:
+One can instead pattern-match on non-variant objects, which essentially amounts
+to deconstructing fields:
 
 ```nim
 type Person = object
@@ -156,27 +164,39 @@ proc UnitCircle(side: int): Shape =
   Shape(kind: ShapeKind.UnitCircle)
 ```
 
-Notice that the macro also generates three convenient constructors (`Circle` ,`Rectangle` and `UnitCircle`), and in fact the enum is pure to avoid a name conflict. Also, a proper definition of equality based on the actual contents of the record is generated.
+Notice that the macro also generates three convenient constructors
+(`Circle` ,`Rectangle` and `UnitCircle`), and in fact the enum is pure to avoid
+a name conflict. Also, a proper definition of equality based on the actual
+contents of the record is generated.
 
-**By default the generated ADT is private to the module**. If you want to generate a public ADT use the `variantp` macro, which has the same syntax as `variant` but makes the types, fields, equality definition and generated constructors public.
+**By default the generated ADT is private to the module**. If you want to
+generate a public ADT use the `variantp` macro, which has the same syntax
+as `variant` but makes the types, fields, equality definition and generated
+constructors public.
 
 A couple of limitations fo the `variant` macro:
 
-* field names must be unique across branches (that is, different variants cannot have two fields with the same name). This is actually a limitation of Nim.
-* the shortcut that groups field names by type does not seem to work, that is, in the above example one could not write `Rectangle(w, h: float)`.
+* field names must be unique across branches (that is, different variants cannot
+  have two fields with the same name). This is actually a limitation of Nim.
+* the shortcut that groups field names by type does not seem to work, that is,
+in the above example one could not write `Rectangle(w, h: float)`.
 
-In the future, Patty may also add copy constructors. Also, some work needs to be done to make it easier to use the generated contructors with `ref` types, in particular for the important case of recursive algebraic data types.
+In the future, Patty may also add copy constructors. Also, some work needs to
+be done to make it easier to use the generated contructors with `ref` types,
+in particular for the important case of recursive algebraic data types.
 
 Versions
 --------
 
-Patty 0.1.8 works for latest Nim (devel). For older versions of Nim (up to 0.13.0),
+Patty 0.2.0 works for latest Nim (devel). For older versions of Nim (up to 0.13.0),
 use Patty 0.1.7.
 
 Things that do not work (yet)
 -----------------------------
 
-One would expect many forms of pattern matching but, at least for now, the support in Patty is very limited. Things that would be nice to support but do not work yet include:
+One would expect many forms of pattern matching but, at least for now, the
+support in Patty is very limited. Things that would be nice to support but do
+not work yet include:
 
 * matching a constant
 
