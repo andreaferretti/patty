@@ -62,13 +62,17 @@ proc makeBranch(base, n: NimNode, pub: bool): NimNode =
 
 proc makeGenerics(e: NimNode): NimNode =
   e.expectKinds(nnkIdent, nnkBracketExpr)
-  if e.kind == nnkIdent: newEmptyNode()
-  else: newNimNode(nnkGenericParams).add(
-    newNimNode(nnkIdentDefs).add(
-      e[1],
-      newEmptyNode(),
-      newEmptyNode()
-    ))
+  if e.kind == nnkIdent:
+    result = newEmptyNode()
+  else:
+    result = newNimNode(nnkGenericParams)
+    for i in 1..<e.len:
+      result.add(
+        newNimNode(nnkIdentDefs).add(
+          e[i].copyNimTree,
+          newEmptyNode(),
+          newEmptyNode()
+      ))
 
 proc defineTypes(e, body: NimNode, pub: bool = false): NimNode =
   e.expectKinds(nnkIdent, nnkBracketExpr)
@@ -121,14 +125,19 @@ proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode =
   let base = ident($(typeName)) & enumSuffix
 
   if n.kind == nnkObjConstr:
-    var params = @[e]
+    var params = @[e.copyNimTree]
     for c in tail(n):
       c.expectKind(nnkExprColonExpr)
       c.expectMinLen(2)
       params.add(newIdentDefs(c[0], c[1]))
 
     var constr = newNimNode(nnkObjConstr).add(
-      e, newColonExpr(ident("kind"), newNimNode(nnkDotExpr).add(base, n[0])))
+      e.copyNimTree,
+      newColonExpr(
+        ident("kind"),
+        newNimNode(nnkDotExpr).add(base, n[0])
+      )
+    )
     for c in tail(n):
       c.expectKind(nnkExprColonExpr)
       c.expectMinLen(2)
@@ -143,7 +152,7 @@ proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode =
     result[2] = makeGenerics(e)
   elif n.kind == nnkIdent:
     var constr = newNimNode(nnkObjConstr).add(
-      e, newColonExpr(ident("kind"), newNimNode(nnkDotExpr).add(base, n)))
+      e.copyNimTree, newColonExpr(ident("kind"), newNimNode(nnkDotExpr).add(base, n)))
     let procName = if pub: postfix(n, "*") else: n
     result = newProc(
       name = procName,
@@ -199,7 +208,11 @@ proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode =
 
   result = newProc(
     name = procName,
-    params = [ident("bool"), newIdentDefs(ident("a"), tp), newIdentDefs(ident("b"), tp)],
+    params = [
+      ident("bool"),
+      newIdentDefs(ident("a"), tp.copyNimTree),
+      newIdentDefs(ident("b"), tp.copyNimTree)
+    ],
     body = newStmtList(body)
   )
   result[2] = makeGenerics(tp)
