@@ -1,5 +1,8 @@
 import unittest, patty, testhelp
 
+proc `~`[A](a: A): ref A =
+  new(result)
+  result[] = a
 
 suite "variant construction":
   test "basic creation":
@@ -58,11 +61,7 @@ suite "variant construction":
       Nil
       Cons(head: int, tail: ref IntList)
 
-    proc inew[A](a: A): ref A =
-      new(result)
-      result[] = a
-
-    var d = Cons(3, inew(Cons(2, inew(Cons(1, inew(Nil()))))))
+    let d = Cons(3, ~(Cons(2, ~(Cons(1, ~(Nil()))))))
     check d.head == 3
     check d.tail.head == 2
 
@@ -73,17 +72,13 @@ suite "variant construction":
       Nil
       Cons(head: A, tail: ref List2[A])
 
-    proc inew[A](a: A): ref A =
-      new(result)
-      result[] = a
-
-    var d = Cons(3, inew(Cons(2, inew(Cons(1, inew(Nil[int]()))))))
+    var d = Cons(3, ~(Cons(2, ~(Cons(1, ~(Nil[int]()))))))
     check d.head == 3
     check d.tail.head == 2
 
     # Check that equality behaves as expected
-    let nilInt = inew(Nil[int]())
-    let nilString = inew(Nil[string]())
+    let nilInt = ~(Nil[int]())
+    let nilString = ~(Nil[string]())
     check: Cons(123, nilInt) == Cons(123, nilInt)
     check: Cons(321, nilInt) != Cons(123, nilInt)
     check: Cons("foo", nilString) == Cons("foo", nilString)
