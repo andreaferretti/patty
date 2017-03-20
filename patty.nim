@@ -253,8 +253,9 @@ proc discriminator(tp: NimNode): NimNode =
 proc variants(tp: NimNode): seq[NimNode] =
   let disc = discriminator(tp)
   result = @[]
-  for e in getType(disc)[0].children:
-    result.add(e)
+  for e in getType(disc).children:
+    if e.kind != nnkEmpty:
+      result.add(e)
 
 proc resolveSymbol(id: NimNode, syms: seq[NimNode]): tuple[index: int, sym: NimNode] =
   id.expectKinds(nnkIdent, nnkSym)
