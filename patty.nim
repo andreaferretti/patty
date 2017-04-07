@@ -218,7 +218,7 @@ proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode =
   result[2] = makeGenerics(tp)
   # result = getAst(compare(condition, tp))
 
-macro variant*(e: typed, body: untyped): untyped {. immediate .} =
+macro variant*(e, body: untyped): untyped =
   result = newStmtList(defineTypes(e, body), defineEquality(e, body))
 
   for child in children(body):
@@ -227,7 +227,7 @@ macro variant*(e: typed, body: untyped): untyped {. immediate .} =
   when defined(pattydebug):
     echo toStrLit(result)
 
-macro variantp*(e: typed, body: untyped): untyped {. immediate .} =
+macro variantp*(e, body: untyped): untyped =
   result = newStmtList(defineTypes(e, body, true), defineEquality(e, body, true))
 
   for child in children(body):
