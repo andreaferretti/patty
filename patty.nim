@@ -411,7 +411,10 @@ proc matchVariant(statements, sym, tp: NimNode): NimNode =
   for child in children(statements):
     result.add(matchBranch(child, sym, tp))
 
-macro match*(e: typed, statements: untyped): untyped =
+macro match*(e: typed, body: untyped): untyped =
+  let statements =
+    if body.kind == nnkDo: body[6]
+    else: body
   statements.expectKind(nnkStmtList)
   let
     exprType = getType(e)

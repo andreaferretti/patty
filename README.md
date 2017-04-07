@@ -114,6 +114,16 @@ match p:
     echo n, "is ", a, " years old"
 ```
 
+Pattern matching also works as an expression:
+
+```nim
+let coord = match c:
+  Circle(x: x, y: y, r: r):
+    x
+  Rectangle(w: w, h: h):
+    h
+```
+
 Constructing variant objects
 ----------------------------
 
@@ -220,8 +230,8 @@ echo sum(list(1, 2, 3, 4, 5))
 Versions
 --------
 
-Patty 0.2.0 works for latest Nim (devel). For older versions of Nim (up to 0.13.0),
-use Patty 0.1.7.
+Patty 0.3.0 works for latest Nim (devel). For older versions of Nim (up to 0.16.0),
+use Patty 0.2.1.
 
 Things that do not work (yet)
 -----------------------------
@@ -269,28 +279,6 @@ match c:
 match getMeACircle():
   c@Circle(x, y, r):
     echo "there you have ", c
-```
-
-* pattern matching as an expression should be simply
-
-```nim
-let coord = match c:
-  Circle(x: x, y: y, r: r):
-    x
-  Rectangle(w: w, h: h):
-    h
-```
-
-Right now it works (with latest nim devel) like this:
-
-```nim
-let coord = (block:
-  match c:
-    Circle(x: x, y: y, r: r):
-      x
-    Rectangle(w: w, h: h):
-      h
-)
 ```
 
 * unification
