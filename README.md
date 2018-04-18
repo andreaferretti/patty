@@ -164,13 +164,13 @@ proc `==`(a: Shape; b: Shape): bool =
   else:
     return false
 
-proc Circle(r: float; x: float; y: float): Shape =
+proc Circle(r: float): Shape =
   Shape(kind: ShapeKind.Circle, r: r)
 
 proc Rectangle(w: float; h: float): Shape =
   Shape(kind: ShapeKind.Rectangle, w: w, h: h)
 
-proc UnitCircle(side: int): Shape =
+proc UnitCircle(): Shape =
   Shape(kind: ShapeKind.UnitCircle)
 ```
 
