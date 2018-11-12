@@ -113,6 +113,25 @@ suite "variant construction":
     check c1 != s
     check u1 == u2
 
+  test "one type declaration to multiple fields":
+    variant Shape:
+      Circle(r: float, x, y: float)
+      Rectangle(w, h: float)
+      Square(side: int)
+      UnitCircle
+
+    let
+      c = Circle(3, 2, 5)
+      r = Rectangle(4, 2)
+      s = Square(42)
+
+    check c.r == 3
+    check c.x == 2
+    check c.y == 5
+    check r.w == 4
+    check r.h == 2
+    check s.side == 42
+
   test "handling visibility":
     let car = Vehicle(kind: VehicleKind.Car, brand: "Fiat", model: "Punto")
 

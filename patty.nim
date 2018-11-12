@@ -16,10 +16,31 @@ proc expectKinds(n: NimNode, kinds: varargs[NimNodeKind]) =
   if not @kinds.contains(n.kind):
     error("Expected a node of kind among " & $(@kinds) & ", got " & $n.kind, n)
 
+proc getFields(n: NimNode, pub: bool): seq[tuple[name, ty: NimNode]] =
+  result = @[]
+  var identsWithoutTypeDec: seq[NimNode] = @[]
+  for e in tail(n):
+    if e.kind == nnkExprColonExpr:
+      e.expectMinLen(2)
+      let
+        fieldName = if pub: postfix(e[0], "*") else: e[0]
+        fieldType = e[1]
+      for name in identsWithoutTypeDec:
+        result.add((name: name, ty: fieldType))
+      identsWithoutTypeDec = @[]
+      result.add((name: fieldName, ty: fieldType))
+    elif e.kind == nnkIdent:
+      let name = if pub: postfix(e, "*") else: e
+      identsWithoutTypeDec.add(name)
+    else:
+      error("Invalid feild declaration:" & $(toStrLit(e)))
+  if identsWithoutTypeDec.len > 0:
+    error("Invalid ADT case: " & $(toStrLit(n)) & n.treeRepr)
+
 proc enumsIn(n: NimNode): seq[NimNode] =
   result = @[]
   for c in children(n):
-    if c.kind == nnkObjConstr:
+    if c.kind == nnkObjConstr or c.kind == nnkCall:
       let id = c[0]
       id.expectKind(nnkIdent)
       result.add(id)
@@ -42,23 +63,19 @@ proc newEnum(name: NimNode, idents: seq[NimNode]): NimNode =
 
 proc makeBranch(base, n: NimNode, pub: bool): NimNode =
   result = newNimNode(nnkOfBranch)
-  if n.kind == nnkObjConstr:
+  if n.kind == nnkObjConstr or n.kind == nnkCall:
     let id = newNimNode(nnkDotExpr).add(base, n[0])
-    var list = newNimNode(nnkRecList)
-    for e in tail(n):
-      e.expectKind(nnkExprColonExpr)
-      e.expectMinLen(2)
-      let
-        fieldName = if pub: postfix(e[0], "*") else: e[0]
-        fieldType = e[1]
-      list.add(newIdentDefs(fieldName, fieldType))
+    var
+      list = newNimNode(nnkRecList)
+    for field in getFields(n, pub):
+      list.add(newIdentDefs(field.name, field.ty))
     result.add(id, list)
   elif n.kind == nnkIdent:
     result.add(newNimNode(nnkDotExpr).add(base, n), newNimNode(nnkRecList).add(newNilLit()))
   elif n.kind == nnkCommentStmt:
     discard
   else:
-      error("Invalid ADT case: " & $(toStrLit(n)))
+    error("Invalid ADT case: " & $(toStrLit(n)))
 
 proc makeGenerics(e: NimNode): NimNode =
   e.expectKinds(nnkIdent, nnkBracketExpr)
@@ -124,12 +141,10 @@ proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode =
   typeName.expectKind(nnkIdent)
   let base = ident($(typeName)) & enumSuffix
 
-  if n.kind == nnkObjConstr:
+  if n.kind == nnkObjConstr or n.kind == nnkCall:
     var params = @[e.copyNimTree]
-    for c in tail(n):
-      c.expectKind(nnkExprColonExpr)
-      c.expectMinLen(2)
-      params.add(newIdentDefs(c[0], c[1]))
+    for field in getFields(n, false):
+      params.add(newIdentDefs(field.name, field.ty))
 
     var constr = newNimNode(nnkObjConstr).add(
       e.copyNimTree,
@@ -138,10 +153,8 @@ proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode =
         newNimNode(nnkDotExpr).add(base, n[0])
       )
     )
-    for c in tail(n):
-      c.expectKind(nnkExprColonExpr)
-      c.expectMinLen(2)
-      constr.add(newColonExpr(c[0], c[0]))
+    for field in getFields(n, false):
+      constr.add(newColonExpr(field.name, field.name))
     let procName = if pub: postfix(n[0], "*") else: n[0]
 
     result = newProc(
@@ -170,12 +183,14 @@ proc eqFor(e, n: NimNode): NimNode =
     else: e[0]               # generic case
   typeName.expectKind(nnkIdent)
   let base = ident($(typeName)) & enumSuffix
-  if n.kind == nnkObjConstr:
+  if n.kind == nnkObjConstr or n.kind == nnkCall:
     result = newNimNode(nnkOfBranch).add(newNimNode(nnkDotExpr).add(base, n[0]))
     var comparisons: seq[NimNode] = @[]
 
     for c in tail(n):
-      comparisons.add(infix(newDotExpr(ident("a"), c[0]), "==", newDotExpr(ident("b"), c[0])))
+      # else c.kind == nnkIdent
+      let name = if c.kind == nnkExprColonExpr: c[0] else: c
+      comparisons.add(infix(newDotExpr(ident("a"), name), "==", newDotExpr(ident("b"), name)))
 
     let body = foldr(comparisons, infix(a, "and", b))
 
