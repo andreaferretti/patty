@@ -1,6 +1,6 @@
 mode = ScriptMode.Verbose
 
-version       = "0.3.1"
+version       = "0.3.2"
 author        = "Andrea Ferretti"
 description   = "Algebraic data types and pattern matching"
 license       = "Apache2"

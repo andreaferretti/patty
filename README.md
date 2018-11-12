@@ -184,12 +184,9 @@ generate a public ADT use the `variantp` macro, which has the same syntax
 as `variant` but makes the types, fields, equality definition and generated
 constructors public.
 
-A couple of limitations fo the `variant` macro:
-
-* field names must be unique across branches (that is, different variants cannot
-  have two fields with the same name). This is actually a limitation of Nim.
-* the shortcut that groups field names by type does not seem to work, that is,
-in the above example one could not write `Rectangle(w, h: float)`.
+A limitation of the `variant` macro is that field names must be unique across
+branches (that is, different variants cannot have two fields with the same name).
+This is actually a limitation of Nim.
 
 In the future, Patty may also add copy constructors. Also, some work needs to
 be done to make it easier to use the generated contructors with `ref` types,
