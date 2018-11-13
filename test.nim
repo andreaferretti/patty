@@ -350,5 +350,26 @@ suite "pattern matching":
      match m:
        mkA:
          result = 1
-
    check(bar(1) == 1)
+
+ test "matching with a variant which share some fields with other variants":
+   type XKind {.pure.} = enum
+     A
+     B
+
+   type X = object
+     case kind: XKind
+     of A, B:
+       x: int
+
+   let
+     x: X = X(kind: XKind.A, x: 0)
+     y: X = X(kind: XKind.B, x: 42)
+
+   proc test_match(x :X): int =
+     match x:
+       A(x): return x
+       B(x): return x
+
+   check(test_match(x) == 0)
+   check(test_match(y) == 42)
