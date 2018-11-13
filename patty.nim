@@ -281,6 +281,12 @@ proc resolveSymbol(id: NimNode, syms: seq[NimNode]): tuple[index: int, sym: NimN
     count += 1
   error("Invalid matching clause: " & $(id))
 
+proc findBranchContainsIndex(recCase: NimNode, index: int): NimNode =
+  for branch in recCase.tail:
+    for c in branch.children:
+      if c.kind == nnkIntLit and c.intVal == index:
+        return branch
+
 proc findFields(tp: NimNode, index: int): seq[NimNode] =
   # ObjectTy
   #   Empty
@@ -303,13 +309,20 @@ proc findFields(tp: NimNode, index: int): seq[NimNode] =
   #         IntLit 2
   #         RecList
   #           Sym "side"
+  #       OfBranch
+  #         IntLit 3
+  #         IntLit 4
+  #         RecList
+  #           Sym "a"
+  #           Sym "b"
   let
     recCase = tp[2][0]
-    branch = recCase[index + 1]
-    recList = branch[1]
   result = @[]
-  for c in recList.children:
-    result.add(c)
+
+  for bc in recCase.findBranchContainsIndex(index):
+    if bc.kind == nnkRecList:
+      for c in bc:
+        result.add(c)
 
 proc findFields(tp: NimNode): seq[NimNode] =
   # ObjectTy
