@@ -162,6 +162,7 @@ proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode =
       params = params,
       body = newStmtList().add(constr)
     )
+    result.pragma = newNimNode(nnkPragma).add(ident("used"))
     result[2] = makeGenerics(e)
   elif n.kind == nnkIdent:
     var constr = newNimNode(nnkObjConstr).add(
@@ -172,6 +173,7 @@ proc defineConstructor(e, n: NimNode, pub: bool = false): NimNode =
       params = [e],
       body = newStmtList().add(constr)
     )
+    result.pragma = newNimNode(nnkPragma).add(ident("used"))
     result[2] = makeGenerics(e)
   else:
       error("Invalid ADT case: " & $(toStrLit(n)))
@@ -230,6 +232,7 @@ proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode =
     ],
     body = newStmtList(body)
   )
+  result.pragma = newNimNode(nnkPragma).add(ident("used"))
   result[2] = makeGenerics(tp)
   # result = getAst(compare(condition, tp))
 
