@@ -95,6 +95,34 @@ of Rectangle:
   echo "it is a rectangle of height ", height
 ```
 
+The wildcard `_` can also be used as a stand alone pattern, in which case it
+will match anything.
+It is translated into an `else` clause, that is, the following
+
+```nim
+import patty
+
+proc makeRect(w, h: float): Shape = Shape(kind: Rectangle, w: w, h: h)
+
+match makeRect(3, 4):
+  Circle(r: radius):
+    echo "it is a circle of radius ", radius
+  _:
+    echo "it is not a circle"
+```
+
+becomes
+
+```nim
+let :tmp = makeRect(3, 4)
+case :tmp.kind
+of Circle:
+  let radius = :tmp.r
+  echo "it is a circle of radius ", radius
+else:
+  echo "it is not a circle"
+```
+
 Notice that in the examples, the field you dispatch on is called `kind`, but
 any other name would do. Also, checks are exhaustive: if you miss a case, the
 compiler will complain.
