@@ -340,6 +340,15 @@ suite "pattern matching":
 
    check(res == 1)
 
+ test "generic variant":
+   type AccProc[T] = proc(): T {.nimcall.}
+
+   variant Accept[T]:
+     NotAcc
+     Acc(fun: AccProc[T])
+
+   discard Acc[int](nil)
+
  test "matching inside generic context":
    variant Foo:
      mkA

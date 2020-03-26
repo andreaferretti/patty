@@ -26,14 +26,14 @@ proc getFields(n: NimNode, pub: bool): seq[tuple[name, ty: NimNode]] =
         fieldName = if pub: postfix(e[0], "*") else: e[0]
         fieldType = e[1]
       for name in identsWithoutTypeDec:
-        result.add((name: name, ty: fieldType))
+        result.add((name: name, ty: fieldType.copyNimTree))
       identsWithoutTypeDec = @[]
-      result.add((name: fieldName, ty: fieldType))
+      result.add((name: fieldName, ty: fieldType.copyNimTree))
     elif e.kind == nnkIdent:
       let name = if pub: postfix(e, "*") else: e
       identsWithoutTypeDec.add(name)
     else:
-      error("Invalid feild declaration:" & $(toStrLit(e)))
+      error("Invalid field declaration:" & $(toStrLit(e)))
   if identsWithoutTypeDec.len > 0:
     error("Invalid ADT case: " & $(toStrLit(n)) & n.treeRepr)
 
