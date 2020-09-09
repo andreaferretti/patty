@@ -186,6 +186,8 @@ proc eqFor(e, n: NimNode): NimNode =
   typeName.expectKind(nnkIdent)
   let base = ident($(typeName)) & enumSuffix
   if n.kind == nnkObjConstr or n.kind == nnkCall:
+    if len(n) < 2:
+      error("Empty parens are not used for a variant with no parameters, please remove them")
     result = newNimNode(nnkOfBranch).add(newNimNode(nnkDotExpr).add(base, n[0]))
     var comparisons: seq[NimNode] = @[]
 
