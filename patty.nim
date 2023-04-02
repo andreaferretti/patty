@@ -234,7 +234,7 @@ proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode =
     ],
     body = newStmtList(body)
   )
-  result.pragma = newNimNode(nnkPragma).add(ident("used"))
+  result.pragma = newTree(nnkPragma, ident("used"), ident("noSideEffect"))
   result[2] = makeGenerics(tp)
   # result = getAst(compare(condition, tp))
 
